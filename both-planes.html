@@ -23,6 +23,34 @@
         <span class="module-link-copy"><strong>Both planes</strong><small>Inclined to HP and VP</small></span>
       </a>
     </nav>
+    <details class="mobile-module-menu">
+      <summary aria-label="Open module navigation">
+        <span class="mobile-menu-icon" aria-hidden="true">☰</span>
+        <span>Modules</span>
+        <span class="mobile-menu-chevron" aria-hidden="true">▾</span>
+      </summary>
+      <div class="mobile-menu-panel">
+        <p class="mobile-menu-current">Module 02 · Both planes</p>
+        <p class="mobile-menu-heading">PROJECTION OF SOLIDS</p>
+        <a class="mobile-menu-item" href="./index.html" >
+          <span class="mobile-menu-number">01</span>
+          <span class="mobile-menu-copy"><strong>Solids inclined to one plane</strong><small>Inclined to HP or VP</small></span>
+        </a>
+        <a class="mobile-menu-item is-active" href="./both-planes.html" aria-current="page">
+          <span class="mobile-menu-number">02</span>
+          <span class="mobile-menu-copy"><strong>Solids inclined to both planes</strong><small>Inclined to HP and VP</small></span>
+        </a>
+        <p class="mobile-menu-heading mobile-menu-heading-next">MORE MODULES</p>
+        <div class="mobile-menu-item is-upcoming" aria-disabled="true">
+          <span class="mobile-menu-number">03</span>
+          <span class="mobile-menu-copy"><strong>Isometric projection</strong><small>Coming soon</small></span>
+        </div>
+        <div class="mobile-menu-item is-upcoming" aria-disabled="true">
+          <span class="mobile-menu-number">04</span>
+          <span class="mobile-menu-copy"><strong>Projection of lines</strong><small>Coming soon</small></span>
+        </div>
+      </div>
+    </details>
   </header>
   <main class="page">
     <section class="intro">
@@ -57,6 +85,16 @@
         <label class="field" id="edgeSelectField"><span>Base edge for edge-inclination condition</span>
           <select id="edgeSelect"><option value="0">First base edge</option><option value="1">Next base edge</option><option value="2">Third base edge</option></select>
         </label>
+        <label class="field"><span>Resting / reference feature</span>
+          <select id="restingCondition">
+            <option value="base">Base / base-edge hinge</option>
+            <option value="corner">Corner / vertex</option>
+            <option value="slant">Slant edge / generator</option>
+          </select>
+        </label>
+        <label class="field"><span>Reference plane for contact</span>
+          <select id="restingPlane"><option value="HP">HP — Horizontal Plane</option><option value="VP">VP — Vertical Plane</option></select>
+        </label>
         <div class="field status-field"><span>Geometric check</span><p id="geometryStatus" role="status">Valid angle combination.</p></div>
       </div>
       <p class="help" id="conditionHelp">For an axis inclined to both planes, the two angles are constrained by the direction cosines of the axis.</p>
@@ -64,10 +102,10 @@
 
     <section class="view-grid" aria-label="3D model and orthographic projections">
       <article class="panel view-panel"><div class="view-heading"><div><h2>3D model</h2><p>Drag to orbit · Scroll to zoom</p></div><span class="view-tag">3D</span></div><div id="sceneWrap" class="scene-wrap"><div class="loading">Loading 3D model…</div></div><div class="legend"><span><i class="dot dot-solid"></i> Solid</span><span><i class="dot dot-hp"></i> HP</span><span><i class="dot dot-vp"></i> VP</span></div></article>
-      <article class="panel view-panel"><div class="view-heading"><div><h2>Orthographic drawing sheet</h2><p>Views are generated from the same transformed vertices.</p></div><span class="view-tag">2D</span></div><canvas id="drawingSheet" width="900" height="680" aria-label="First-angle front view above XY and top view below XY"></canvas><p class="projection-note"><strong>First-angle projection:</strong> front view (FV) is above XY; top view (TV) is below XY. XY is the intersection of HP and VP. Corresponding points are aligned using projectors.</p></article>
+      <article class="panel view-panel"><div class="view-heading"><div><h2>Orthographic drawing sheet</h2><p>Views are generated from the same transformed vertices.</p></div><span class="view-tag">2D</span></div><canvas id="drawingSheet" width="900" height="680" aria-label="First-angle front view above XY and top view below XY"></canvas><p class="projection-note"><strong>VP projection — Front View (FV):</strong> above XY. <strong>HP projection — Top View (TV):</strong> below XY. XY is the intersection of HP and VP. Dashed projectors align corresponding points in first-angle projection.</p></article>
     </section>
 
-    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>For the base-edge conditions, choose which polygon base edge is used for the second inclination constraint. Curved solids do not have a polygonal base edge, so these conditions are disabled for cylinder and cone.</li></ol><p class="small-note">This is an educational visualizer. Check construction steps, contact conditions and visible/hidden-edge conventions against the prescribed engineering-drawing method for the specific problem.</p></section>
+    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>For the axis-both-planes condition, select a base-edge hinge, a supporting corner/vertex, or a slant edge/generator, and choose HP or VP as the contact plane. In the mixed conditions, the base edge is the required hinge and the reference plane is fixed by the construction.</li><li>The drawing sheet shows the VP projection (front view) above XY and the HP projection (top view) below XY, generated from the same transformed 3D vertices.</li></ol><p class="small-note">This is an educational visualizer. Check construction steps, contact conditions and visible/hidden-edge conventions against the prescribed engineering-drawing method for the specific problem.</p></section>
     <footer class="footer"><strong>Nurvizam Engineering Graphics Lab</strong><span>Module 02 · Solids inclined to both HP and VP</span><a href="./index.html">Open Module 01: Single-plane experiment</a><span>Developed by Dr. Mohammed Shafeeque KK · Ph.D., IIT Palakkad</span></footer>
   </main>
   <script type="module" src="./both-planes.js"></script>
