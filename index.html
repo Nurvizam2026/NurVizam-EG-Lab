@@ -90,7 +90,15 @@
         <div class="drawing-sheet">
           <div class="sheet-label sheet-front">FRONT VIEW · VP</div>
           <div class="sheet-label sheet-top">TOP VIEW · HP</div>
-          <svg id="drawingSheet" viewBox="0 0 700 500" role="img" aria-label="Orthographic drawing sheet with front view above XY and top view below XY"></svg>
+          <svg id="drawingSheet" viewBox="0 0 700 500" role="img" aria-label="Orthographic drawing sheet with front view above XY and top view below XY">
+            <line x1="28" y1="250" x2="672" y2="250" stroke="#172033" stroke-width="1.8"/>
+            <text x="648" y="241" fill="#172033" font-size="13" font-weight="800">X Y</text>
+            <text x="350" y="26" text-anchor="middle" fill="#647089" font-size="11">ORTHOGRAPHIC PROJECTION · FIRST-ANGLE LAYOUT</text>
+            <text x="35" y="48" fill="#647089" font-size="11">FRONT VIEW</text>
+            <text x="35" y="477" fill="#647089" font-size="11">TOP VIEW</text>
+            <rect x="280" y="100" width="140" height="125" fill="none" stroke="#d9772c" stroke-width="2" stroke-dasharray="6 5" opacity=".55"/>
+            <rect x="280" y="275" width="140" height="100" fill="none" stroke="#087f8c" stroke-width="2" stroke-dasharray="6 5" opacity=".55"/>
+          </svg>
         </div>
         <p class="projection-note"><strong>First-angle layout:</strong> front view is above XY; top view is below XY. Thin vertical projectors connect corresponding points. The same projections are shown on the VP and HP in the 3D model.</p>
       </article>
@@ -132,6 +140,26 @@
     </section>
     <footer><span>Nurvizam Engineering Concepts</span><span>Learn · Visualize · Explain</span></footer>
   </main>
+  <script>
+    window.addEventListener('error', function (event) {
+      const wrap = document.getElementById('sceneWrap');
+      if (wrap && !wrap.querySelector('.runtime-error')) {
+        const error = document.createElement('div');
+        error.className = 'runtime-error';
+        error.textContent = '3D model could not start. Refresh the page; if this continues, check the browser console or network access to the Three.js CDN.';
+        wrap.appendChild(error);
+      }
+    });
+    window.addEventListener('unhandledrejection', function () {
+      const wrap = document.getElementById('sceneWrap');
+      if (wrap && !wrap.querySelector('.runtime-error')) {
+        const error = document.createElement('div');
+        error.className = 'runtime-error';
+        error.textContent = '3D libraries failed to load. Check your internet connection and refresh.';
+        wrap.appendChild(error);
+      }
+    });
+  </script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

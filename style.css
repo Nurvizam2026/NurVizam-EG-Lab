@@ -124,3 +124,5 @@ footer { display: flex; justify-content: space-between; gap: 12px; padding: 22px
 }
 .sheet-front { top: 10px; left: 12px; }
 .sheet-top { bottom: 10px; left: 12px; }
+
+.runtime-error { position:absolute; inset:12px; display:flex; align-items:center; justify-content:center; padding:20px; border:1px solid #ef4444; border-radius:10px; background:rgba(255,245,245,.96); color:#991b1b; text-align:center; font-size:14px; z-index:20; }

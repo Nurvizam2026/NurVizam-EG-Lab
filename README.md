@@ -1,54 +1,17 @@
-# Nurvizam EG Lab — first version
+# Nurvizam Engineering Graphics Lab
 
-An interactive, static GitHub Pages learning app for Engineering Graphics: solids inclined to one plane.
+Interactive Engineering Graphics teaching prototype for solids inclined to HP or VP.
 
 ## Features
+- Triangular and square prism models
+- Separate inclination modes: inclined to HP / parallel to VP, and inclined to VP / parallel to HP
+- 3D HP and VP reference planes with labels
+- First-angle orthographic sheet with front view, top view, XY line, and projectors
+- Hidden edges shown with dashed lines in orthographic views and on the projected reference planes
+- Visible fallback drawing labels and an on-screen error message if the 3D module fails to start
 
-- Three.js 3D model with camera orbit (drag), zoom (scroll/pinch)
-- Triangular prism and square prism
-- Inclination slider
-- Front and top projections drawn directly on the VP and HP reference planes in the 3D scene
-- A separate orthographic drawing sheet with XY line, front view above XY, top view below XY, and corresponding projectors
-- Projection-guide toggle
-- Guided hint, explanation and a short quiz
-- Responsive layout for phones and computers
+## Run/deploy
+This is a static site. Deploy the folder contents to the root of a GitHub Pages repository. The browser needs internet access to load Three.js from jsDelivr.
 
-## Important teaching/geometry note
-
-This is an introductory visualization aid, not a complete exam-drawing solver. It rotates the solid around the global y-axis, then translates it vertically so its lowest vertex stays on HP. The 3D planes show projected edges and construction projectors; the separate sheet uses a first-angle front/top layout. All projected edges are currently drawn as solid lines; hidden-line classification and textbook-specific hinge constructions are not implemented. Verify the construction against the convention used in your course before using it as an authoritative solution.
-
-## Deploy to GitHub Pages
-
-1. Create a new public repository named `nurvizam-eg-lab`.
-2. Upload `index.html`, `style.css`, `app.js`, and `README.md` to the repository root.
-3. Open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**.
-5. Choose branch `main` and folder `/ (root)`, then click **Save**.
-6. Wait for GitHub to publish the site. The URL will usually be:
-   `https://YOUR-USERNAME.github.io/nurvizam-eg-lab/`
-7. Open the URL on a laptop and phone. This app imports Three.js modules from jsDelivr, so the browser needs an internet connection.
-8. Add a link to this URL from your existing personal website.
-
-## Local testing
-
-Because this app uses JavaScript modules, open it through a local web server rather than directly as a `file://` URL. For example, if Python is installed, run this in the project directory:
-
-```bash
-python -m http.server 8000
-```
-
-Then open `http://localhost:8000`.
-
-## Files
-
-- `index.html` — page structure and interface
-- `style.css` — responsive styling
-- `app.js` — 3D scene, model geometry, projections and interactions
-
-
-## Inclination modes
-
-- **Inclined to HP, parallel to VP:** the prism axis starts perpendicular to HP and tilts within a plane parallel to VP.
-- **Inclined to VP, parallel to HP:** the prism axis starts perpendicular to VP and tilts while remaining parallel to HP.
-
-The angle label follows the selected mode. The orthographic drawing sheet remains visible and updates with the 3D model. The loading overlay has been removed so it cannot obscure the model.
+## Educational limitation
+This is a learning visualization, not a complete engineering drawing solver. Hidden-edge classification is an approximate geometric visibility test and should be checked against the exact textbook construction and projection convention for each solid.
