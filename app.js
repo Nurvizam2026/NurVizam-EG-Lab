@@ -30,13 +30,25 @@ renderer.domElement.setAttribute("aria-label", "Interactive 3D prism. Drag to ro
 sceneWrap.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.up.set(0, 0, 1);
+// OrbitControls uses camera.up to determine the orbit's vertical direction.
+// In this engineering-graphics scene Z is vertical, so camera.up is set above
+// the controls are created. OrbitControls itself has no controls.up property.
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.target.set(0, -1.2, 1.35);
 controls.minDistance = 5;
 controls.maxDistance = 18;
 controls.maxPolarAngle = Math.PI * 0.49;
+controls.screenSpacePanning = true;
+controls.update();
+
+function resetCameraView() {
+  // Keep the Z-up coordinate convention consistent when resetting the view.
+  camera.up.set(0, 0, 1);
+  camera.position.set(8.5, -12.5, 8.0);
+  controls.target.set(0, -1.2, 1.35);
+  controls.update();
+}
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0xb9c7d9, 2.0));
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -442,9 +454,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   angleModeLabel.textContent = "Inclination to HP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
-  camera.position.set(8.5, -12.5, 8.0);
-  controls.target.set(0, -1.2, 1.35);
-  controls.update();
+  resetCameraView();
   hintBox.hidden = true;
   quizFeedback.hidden = true;
   rebuildSolid();
