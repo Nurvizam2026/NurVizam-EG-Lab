@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>Solids Inclined to Both HP and VP | Nurvizam Engineering Graphics Lab</title>
+  <link rel="stylesheet" href="./both-planes.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Return to the original Nurvizam Engineering Graphics Lab">
+      <span class="brand-mark">N</span>
+      <span><strong>NURVIZAM</strong><small>ENGINEERING GRAPHICS LAB</small></span>
+    </a>
+    <span class="pill">MODULE 02 · BOTH PLANES</span>
+  </header>
+  <main class="page">
+    <section class="intro">
+      <p class="eyebrow">INTERACTIVE ENGINEERING GRAPHICS</p>
+      <h1>Solids Inclined to Both HP and VP</h1>
+      <p class="lede">Explore combined inclination conditions. Change the axis angles or incline a base edge to the second reference plane, then compare the 3D solid with its first-angle front and top views.</p>
+      <p class="notice"><strong>Independent experiment:</strong> this page uses separate files and does not modify the original single-plane experiment.</p>
+    </section>
+
+    <section class="panel controls" aria-label="Experiment controls">
+      <div class="control-heading">
+        <div><h2>Experiment controls</h2><p>Choose the solid and the geometric condition to investigate.</p></div>
+        <button id="resetBtn" class="button button-quiet" type="button">Reset</button>
+      </div>
+      <div class="control-grid">
+        <label class="field"><span>Solid</span>
+          <select id="solidSelect">
+            <optgroup label="Prisms"><option value="triangular">Triangular prism</option><option value="square">Square prism</option><option value="pentagonal">Pentagonal prism</option><option value="hexagonal">Hexagonal prism</option></optgroup>
+            <optgroup label="Pyramids"><option value="triangularPyramid">Triangular pyramid</option><option value="squarePyramid">Square pyramid</option><option value="pentagonalPyramid">Pentagonal pyramid</option><option value="hexagonalPyramid">Hexagonal pyramid</option></optgroup>
+            <optgroup label="Curved solids"><option value="cylinder">Cylinder</option><option value="cone">Cone</option></optgroup>
+          </select>
+        </label>
+        <label class="field"><span>Inclination condition</span>
+          <select id="conditionSelect">
+            <option value="axisBoth">Axis inclined to both HP and VP</option>
+            <option value="axisHPedgeVP">Axis inclined to HP; base edge inclined to VP</option>
+            <option value="axisVPedgeHP">Axis inclined to VP; base edge inclined to HP</option>
+          </select>
+        </label>
+        <label class="field"><span id="angleALabel">Axis inclination to HP (α)</span><span class="range-line"><input id="angleA" type="range" min="0" max="90" step="1" value="30"><output id="angleAValue">30°</output></span></label>
+        <label class="field"><span id="angleBLabel">Axis inclination to VP (β)</span><span class="range-line"><input id="angleB" type="range" min="0" max="90" step="1" value="30"><output id="angleBValue">30°</output></span></label>
+        <label class="field" id="edgeSelectField"><span>Base edge for edge-inclination condition</span>
+          <select id="edgeSelect"><option value="0">First base edge</option><option value="1">Next base edge</option><option value="2">Third base edge</option></select>
+        </label>
+        <div class="field status-field"><span>Geometric check</span><p id="geometryStatus" role="status">Valid angle combination.</p></div>
+      </div>
+      <p class="help" id="conditionHelp">For an axis inclined to both planes, the two angles are constrained by the direction cosines of the axis.</p>
+    </section>
+
+    <section class="view-grid" aria-label="3D model and orthographic projections">
+      <article class="panel view-panel"><div class="view-heading"><div><h2>3D model</h2><p>Drag to orbit · Scroll to zoom</p></div><span class="view-tag">3D</span></div><div id="sceneWrap" class="scene-wrap"><div class="loading">Loading 3D model…</div></div><div class="legend"><span><i class="dot dot-solid"></i> Solid</span><span><i class="dot dot-hp"></i> HP</span><span><i class="dot dot-vp"></i> VP</span></div></article>
+      <article class="panel view-panel"><div class="view-heading"><div><h2>Orthographic drawing sheet</h2><p>Views are generated from the same transformed vertices.</p></div><span class="view-tag">2D</span></div><canvas id="drawingSheet" width="900" height="680" aria-label="First-angle front view above XY and top view below XY"></canvas><p class="projection-note"><strong>First-angle projection:</strong> front view (FV) is above XY; top view (TV) is below XY. XY is the intersection of HP and VP. Corresponding points are aligned using projectors.</p></article>
+    </section>
+
+    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>For the base-edge conditions, choose which polygon base edge is used for the second inclination constraint. Curved solids do not have a polygonal base edge, so these conditions are disabled for cylinder and cone.</li></ol><p class="small-note">This is an educational visualizer. Check construction steps, contact conditions and visible/hidden-edge conventions against the prescribed engineering-drawing method for the specific problem.</p></section>
+    <footer class="footer"><strong>Nurvizam Engineering Graphics Lab</strong><span>Module 02 · Solids inclined to both HP and VP</span><a href="./">Return to the original experiment</a><span>Developed by Dr. Mohammed Shafeeque KK · Ph.D., IIT Palakkad</span></footer>
+  </main>
+  <script type="module" src="./both-planes.js"></script>
+</body>
+</html>
