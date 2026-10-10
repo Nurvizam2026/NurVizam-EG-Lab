@@ -36,6 +36,8 @@ const xyGeometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-4.
 scene.add(new THREE.Line(xyGeometry,new THREE.LineBasicMaterial({color:0x34445a})));
 const kindInfo={triangular:{n:3,type:"prism"},square:{n:4,type:"prism"},cube:{n:4,type:"prism"},pentagonal:{n:5,type:"prism"},hexagonal:{n:6,type:"prism"},triangularPyramid:{n:3,type:"pyramid"},squarePyramid:{n:4,type:"pyramid"},pentagonalPyramid:{n:5,type:"pyramid"},hexagonalPyramid:{n:6,type:"pyramid"},cylinder:{n:24,type:"cylinder"},cone:{n:24,type:"cone"}};
 function isBodyDiagonalCondition(value=conditionSelect.value){return value==="bodyDiagonal"||value.startsWith("bodyDiagonal");}
+function isGeneralCondition(value=conditionSelect.value){return value==="general";}
+function isAxisBothStyle(value=conditionSelect.value){return value==="axisBoth"||isGeneralCondition(value);}
 function applyNamedDiagonalCondition(){const c=conditionSelect.value;angleA.disabled=false;angleB.disabled=false;angleA.max="90";angleB.max="90";if(c==="bodyDiagonalHPPerp"){angleA.value="90";angleB.value="0";angleA.disabled=angleB.disabled=true;}else if(c==="bodyDiagonalHPParallel"){angleA.value="0";angleA.disabled=true;}else if(c==="bodyDiagonalVPPerp"){angleA.value="0";angleB.value="90";angleA.disabled=angleB.disabled=true;}else if(c==="bodyDiagonalVPParallel"){angleB.value="0";angleB.disabled=true;}if(isBodyDiagonalCondition(c)&&c==="bodyDiagonal") {const maxB=Math.floor(Math.acos(Math.max(-1,Math.min(1,Math.sin(Number(angleA.value)*Math.PI/180))))*180/Math.PI);angleB.max=String(maxB);if(Number(angleB.value)>maxB)angleB.value=String(maxB);}}
 function makeSolid(kind){const {n,type}=kindInfo[kind],v=[],e=[],faces=[],slantEdges=[];const len=kind==="cube"?2.1:2.8,r=kind==="cube"?len/Math.sqrt(2):1.05;
  const ring=x=>{const ids=[];for(let i=0;i<n;i++){const a=2*Math.PI*i/n+Math.PI/2;ids.push(v.length);v.push(new THREE.Vector3(x,r*Math.cos(a),r*Math.sin(a)))}return ids};
@@ -71,7 +73,7 @@ function cubeBodyDiagonalForCorner(vertexId){
 function axisDirectionFromControls(){
  const a=Number(angleA.value)*Math.PI/180,b=Number(angleB.value)*Math.PI/180;
  const condition=conditionSelect.value,plane=restingPlane.value;
- if(condition==="axisBoth"||isBodyDiagonalCondition(condition)){
+ if(isAxisBothStyle(condition)||isBodyDiagonalCondition(condition)){
    const sx=Math.sin(a),sy=Math.sin(b),remaining=1-sx*sx-sy*sy;
    if(isBodyDiagonalCondition(condition))return new THREE.Vector3(Math.sqrt(Math.max(0,remaining)),-sy,sx).normalize();
    const apexSolid=solidSelect.value.endsWith("Pyramid")||solidSelect.value==="cone";
@@ -228,14 +230,14 @@ function transformed(){
  }
  const isCurved=["cylinder","cone"].includes(solidSelect.value);
  const planeFeature=["basePlane","triangularFace","sideFace"].includes(inclinedPartSelect?.value);
- const baseFaceValid=condition==="axisBoth" && apexDirection.value!=="toward" && (planeFeature
+ const baseFaceValid=isAxisBothStyle(condition) && apexDirection.value!=="toward" && (planeFeature
    ? ((plane==="HP" && Math.abs(Number(angleA.value))<.51 && Math.abs(Number(angleB.value)-90)<.51) || (plane==="VP" && Math.abs(Number(angleA.value)-90)<.51 && Math.abs(Number(angleB.value))<.51))
    : ((plane==="HP" && Math.abs(Number(angleA.value)-90)<.51 && Math.abs(Number(angleB.value))<.51) || (plane==="VP" && Math.abs(Number(angleA.value))<.51 && Math.abs(Number(angleB.value)-90)<.51)));
  if(rest==="baseFace"){
    window.__restingInvalid=!baseFaceValid;window.__restingError=baseFaceValid?0:90;window.__contactPair=null;window.__contactVertex=null;window.__restingPlaneUsed=plane;
  }
- if(condition!=="axisBoth"&&!isBodyDiagonalCondition(condition)||rest==="base") pair=window.__baseEdges?.[Number(edgeSelect.value)]||window.__baseEdges?.[0];
- if(condition==="axisBoth"&&rest==="slant") pair=window.__slantEdges?.[Number(edgeSelect.value)%Math.max(1,window.__slantEdges?.length||1)]||window.__slantEdges?.[0];
+ if(!isAxisBothStyle(condition)&&!isBodyDiagonalCondition(condition)||rest==="base") pair=window.__baseEdges?.[Number(edgeSelect.value)]||window.__baseEdges?.[0];
+ if(isAxisBothStyle(condition)&&rest==="slant") pair=window.__slantEdges?.[Number(edgeSelect.value)%Math.max(1,window.__slantEdges?.length||1)]||window.__slantEdges?.[0];
  let cornerSolution=null,faceSolution=null,selectedFace=null;
  if(rest==="corner"){
    const cornerId=cornerSelect?Number(cornerSelect.value):(window.__baseRing||[])[0];
@@ -259,7 +261,7 @@ function transformed(){
  window.__restingPlaneUsed=targetPlane;
  if(pair){
    const edgeVector=rawVertices[pair[1]].clone().sub(rawVertices[pair[0]]);
-   const result=(condition==="axisBoth"||inclinedPartSelect?.value!=="axis")?rollForEdge(q,edgeVector,0,targetPlane,pair,rollAxisWorld):rollForMixedEdge(q,edgeVector,targetPlane,b,pair,rollAxisWorld);
+   const result=(isAxisBothStyle(condition)||inclinedPartSelect?.value!=="axis")?rollForEdge(q,edgeVector,0,targetPlane,pair,rollAxisWorld):rollForMixedEdge(q,edgeVector,targetPlane,b,pair,rollAxisWorld);
    if(result){
      q=result.q;window.__restingError=0;window.__restingInvalid=false;
      window.__restingPlaneUsed=targetPlane;window.__contactPair=pair;window.__contactVertex=null;
@@ -267,7 +269,7 @@ function transformed(){
      // Never fake a contact by translating an edge whose endpoints are not coplanar
      // with the selected reference plane or which is not a supporting edge.
      window.__restingError=90;window.__restingInvalid=true;window.__contactPair=null;window.__contactVertex=null;pair=null;
-     if(condition!=="axisBoth"){window.__restingPlaneUsed=targetPlane;}
+     if(!isAxisBothStyle(condition)){window.__restingPlaneUsed=targetPlane;}
    }
  }else if(rest==="corner"){
    window.__contactPair=null;window.__restingPlaneUsed=plane;
@@ -459,7 +461,7 @@ function updateLabelsAndStatus(){
  else if(c==="bodyDiagonalVPPerp")conditionHelp.textContent="The cube body diagonal is perpendicular to VP (β = 90°). Its opposite vertices align normal to VP. A selected corner can support VP only if the remaining cube vertices stay on the permitted side.";
  else if(c==="bodyDiagonalVPParallel")conditionHelp.textContent="The cube body diagonal is parallel to VP (β = 0°). Its inclination to HP remains adjustable. If VP is selected as the contact plane, a corner-supporting solution is generally impossible because the diagonal has no depth component.";
  else if(isBodyDiagonalCondition(c))conditionHelp.textContent="For a cube, the body diagonal follows the specified inclinations to HP and VP. The selected corner must be the actual supporting vertex, and the adjacent base edges must be equally inclined to the contact plane. The angle pair must satisfy sin²α + sin²β ≤ 1.";
- else if(c==="axisBoth")conditionHelp.textContent=`The selected ${inclinedLabel.toLowerCase()} is inclined by α to HP and β to VP. Line features require sin²α + sin²β ≤ 1; plane features use their plane-to-plane angles. The resting plane and resting part are selected independently. Incompatible combinations remain selectable and are reported by the geometric check.`;
+ else if(isGeneralCondition(c))conditionHelp.textContent=`General mode uses the selected resting plane, resting feature and inclined feature independently. The selected ${inclinedLabel.toLowerCase()} is inclined by α to HP and β to VP. Line features require sin²α + sin²β ≤ 1; plane features use their plane-to-plane angles. The resting plane and resting part are selected independently. Incompatible combinations remain selectable and are reported by the geometric check.`;
  else if(c==="axisHPedgeVP")conditionHelp.textContent="The selected base edge lies on HP and is inclined to VP by β. The axis inclination to HP is α; its final direction is determined by both constraints.";
  else conditionHelp.textContent="The selected base edge lies on VP and is inclined to HP by β. The axis inclination to VP is α; its final direction is determined by both constraints.";
  if(curved&&rest==="slant")conditionHelp.textContent+=" For a cylinder/cone generator, some axis-angle combinations cannot place the generator in the selected plane; the geometric check reports this.";
@@ -474,14 +476,14 @@ function refreshEdgeOptions(){
  const alpha=Number(angleA.value),beta=Number(angleB.value),plane=restingPlane.value;
  if(faceOpt)faceOpt.disabled=false;
  if(slantOpt?.disabled&&rest==="slant")restingCondition.value="base";
- for(const opt of conditionSelect.options)opt.disabled=(curved&&opt.value!=="axisBoth")||(isBodyDiagonalCondition(opt.value)&&solidSelect.value!=="cube");
+ for(const opt of conditionSelect.options)opt.disabled=(curved&&!['axisBoth','general'].includes(opt.value))||(isBodyDiagonalCondition(opt.value)&&solidSelect.value!=="cube");
  if(isBodyDiagonalCondition()&&solidSelect.value!=="cube")conditionSelect.value="axisBoth";
  if(!genericInclination)applyNamedDiagonalCondition();
  else {angleA.disabled=false;angleB.disabled=false;angleA.max="90";angleB.max="90";}
  if(isBodyDiagonalCondition()&&inclinedPartSelect?.value==="axis")restingCondition.value="corner";
  const featureSelector=restingCondition;
  featureSelector.disabled=isBodyDiagonalCondition()&&inclinedPartSelect?.value==="axis";
- if(curved&&conditionSelect.value!=="axisBoth"&&!genericInclination){
+ if(curved&&!isAxisBothStyle(conditionSelect.value)&&!genericInclination){
    conditionSelect.value="axisBoth";angleA.max="90";
    const maxB=Math.floor(Math.acos(Math.max(-1,Math.min(1,Math.sin(Number(angleA.value)*Math.PI/180))))*180/Math.PI);
    angleB.max=String(maxB);if(Number(angleB.value)>maxB)angleB.value=String(maxB);
@@ -495,7 +497,7 @@ function refreshEdgeOptions(){
  const selectedIndex=Number(edgeSelect.value)||0;
  let edgeList=[],prefix="Base edge";
  if(restingCondition.value==="triangularFace"){edgeList=(window.__baseRing||[]).map((id,i)=>[id,(window.__baseRing||[])[(i+1)%(window.__baseRing||[]).length]]);prefix="Triangular side face";}
- else if(conditionSelect.value!=="axisBoth"||restingCondition.value==="base"){edgeList=window.__baseEdges||[];prefix="Base edge";}
+ else if(!isAxisBothStyle(conditionSelect.value)||restingCondition.value==="base"){edgeList=window.__baseEdges||[];prefix="Base edge";}
  else if(restingCondition.value==="slant"){edgeList=window.__slantEdges||[];prefix=curved?"Generator":"Slant edge";}
  edgeSelect.innerHTML="";
  edgeList.forEach((edge,i)=>{const option=document.createElement("option");option.value=String(i);option.textContent=`${prefix} ${i+1}`;edgeSelect.appendChild(option);});
@@ -506,7 +508,7 @@ function refreshEdgeOptions(){
  edgeSelectField.hidden=restingCondition.value==="corner"||restingCondition.value==="baseFace";
  if(cornerSelectField)cornerSelectField.hidden=restingCondition.value!=="corner";
  const edgeLabel=edgeSelectField.querySelector("span");
- if(edgeLabel)edgeLabel.textContent=restingCondition.value==="triangularFace"?"Select triangular side face":conditionSelect.value!=="axisBoth"?"Base edge used as hinge":restingCondition.value==="slant"?(curved?"Generator used for contact":"Slant edge used for contact"):"Base edge used for contact";
+ if(edgeLabel)edgeLabel.textContent=restingCondition.value==="triangularFace"?"Select triangular side face":!isAxisBothStyle(conditionSelect.value)?"Base edge used as hinge":restingCondition.value==="slant"?(curved?"Generator used for contact":"Slant edge used for contact"):"Base edge used for contact";
  syncApexDirectionControl();
 }
 function drawSheet(){const w=sheet.width,h=sheet.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.strokeStyle="#e4eaf2";ctx.lineWidth=1;ctx.strokeRect(18,18,w-36,h-36);const xy=340;ctx.strokeStyle="#64748b";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(38,xy);ctx.lineTo(w-38,xy);ctx.stroke();ctx.fillStyle="#34445a";ctx.font="bold 17px system-ui";ctx.fillText("XY",w-66,xy-9);ctx.font="bold 16px system-ui";ctx.fillText("VP PROJECTION — FRONT VIEW (FV)",38,45);ctx.fillText("HP PROJECTION — TOP VIEW (TV)",38,xy+32);ctx.font="13px system-ui";ctx.fillStyle="#64748b";ctx.fillText("First-angle orthographic projection",38,h-28);
@@ -542,6 +544,6 @@ solidSelect.addEventListener("change",()=>{setSolid(solidSelect.value);});inclin
 edgeSelect.addEventListener("change",updateModel);cornerSelect?.addEventListener("change",updateModel);restingCondition.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});restingPlane.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});apexDirection.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});
 angleA.addEventListener("input",()=>{refreshInclinedFeatureOptions();refreshEdgeOptions();updateModel()});
 angleB.addEventListener("input",()=>{refreshInclinedFeatureOptions();refreshEdgeOptions();updateModel()});
-$("resetBtn").addEventListener("click",()=>{solidSelect.value="triangular";conditionSelect.value="axisBoth";applyNamedDiagonalCondition();angleA.value="30";angleB.value="30";angleA.disabled=false;angleB.disabled=false;angleA.max="90";angleB.max=String(Math.floor(Math.acos(Math.sin(Math.PI/6))*180/Math.PI));edgeSelect.value="0";restingCondition.value="base";restingPlane.value="HP";inclinedPartSelect.value="axis";refreshInclinedFeatureOptions();apexDirection.value="away";theta=-.93;phi=.86;radius=12;updateCamera();setSolid(solidSelect.value);refreshEdgeOptions();updateModel()});
+$("resetBtn").addEventListener("click",()=>{solidSelect.value="triangular";conditionSelect.value="general";applyNamedDiagonalCondition();angleA.value="30";angleB.value="30";angleA.disabled=false;angleB.disabled=false;angleA.max="90";angleB.max=String(Math.floor(Math.acos(Math.sin(Math.PI/6))*180/Math.PI));edgeSelect.value="0";restingCondition.value="base";restingPlane.value="HP";inclinedPartSelect.value="axis";refreshInclinedFeatureOptions();apexDirection.value="away";theta=-.93;phi=.86;radius=12;updateCamera();setSolid(solidSelect.value);refreshEdgeOptions();updateModel()});
 setSolid(solidSelect.value);resize();
 function animate(){requestAnimationFrame(animate);renderer.render(scene,camera)}animate();

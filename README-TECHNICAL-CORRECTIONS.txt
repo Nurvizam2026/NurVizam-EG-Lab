@@ -32,3 +32,13 @@ Flexible inclination controls (October 2026 update)
 Module 02 now has an independent “Which part is inclined?” selector with Axis, Base edge, Slant edge/Generator, Cube body diagonal, Triangular side face, Other side face, and Base plane options. A dependent selector identifies the specific edge, diagonal, or face where applicable. The two angle inputs are interpreted as line-to-plane angles for line features and plane-to-plane angles for face/base-plane features. Feature options that do not exist on the selected solid are not offered. Contact options are kept selectable where practical; incompatibility is reported by the geometric status rather than disabling every candidate in advance.
 
 Verification: JavaScript syntax was checked with Node.js. The browser/WebGL scene has not been executed in a live browser during this update; test representative solids and contact combinations before deploying to GitHub Pages.
+
+General condition dropdown update
+---------------------------------
+- Added a first-choice “General — use the resting and inclination selections below” option to dropdown 2 (Base / geometric condition).
+- General mode treats the chosen resting plane, resting feature, inclined feature, and the two HP/VP angles as independent inputs wherever the current solver supports that construction.
+- The existing named conditions (cube body-diagonal cases and the two mixed axis/base-edge cases) remain available for textbook-specific constructions.
+- The separate resting-feature dropdown does not gain a duplicate General entry; it remains the explicit contact feature selector.
+- General mode is the default on page load and after Reset.
+
+Verification for this package: Node.js syntax check passed; HTML control IDs are unique and required controls are present. A live browser/WebGL render and all geometric combinations have not been exhaustively tested. Contact validity still depends on the implemented solver paths; the General option does not make every arbitrary solid/feature/angle combination mathematically solvable.

@@ -75,6 +75,7 @@
         </label>
         <label class="field"><span>2. Base / geometric condition</span>
           <select id="conditionSelect">
+            <option value="general" selected>General — use the resting and inclination selections below</option>
             <option value="axisBoth">Solid axis inclined to both HP and VP</option>
             <option value="bodyDiagonal">Cube resting on a corner — body diagonal inclined to both planes</option>
             <option value="bodyDiagonalHPPerp">Cube corner resting — body diagonal perpendicular to HP</option>
@@ -90,7 +91,7 @@
         </label>
         <label class="field"><span>4. Resting feature</span>
           <select id="restingCondition">
-            <option value="base">Base edge</option>
+            <option value="base" selected>Base edge</option>
             <option value="baseFace">Complete base face</option>
             <option value="corner">Corner (adjacent base edges equally inclined)</option>
             <option value="slant">Slant edge / generator</option>
