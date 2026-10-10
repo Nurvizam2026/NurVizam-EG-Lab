@@ -123,8 +123,8 @@ grid.position.z = 0.005;
 scene.add(grid);
 
 // Coordinate convention: x = horizontal on the sheet, y = depth, z = height.
-// HP is z=0. VP is y=0. The object is rotated about the y axis and then
-// translated vertically so its lowest point stays on HP.
+// HP is z=0. VP is y=0. The solid rotates about Y or Z according to
+// inclination mode, then is translated to remain above HP and in front of VP.
 const hp = makePlane(10, 10, "#d99aa8", 0.20);
 hp.rotation.x = 0;
 hp.position.z = -0.015;
@@ -179,25 +179,23 @@ let edges = [];
 let currentVertices = [];
 
 function makeGeometry(kind) {
-  const height = 2.7;
-  const mode = inclinationMode.value;
-  let polygon;
+  // The prism's longitudinal axis is the line joining corresponding vertices
+  // of the two end faces. Keep that axis along X in the neutral (0°) position
+  // for BOTH inclination modes. Cross-sections are defined in the YZ plane.
+  const length = 2.7;
+  let crossSection;
   if (kind === "square") {
-    polygon = [[-1.0, -0.9], [1.0, -0.9], [1.0, 0.9], [-1.0, 0.9]];
+    crossSection = [[-0.9, 0], [0.9, 0], [0.9, 1.8], [-0.9, 1.8]];
   } else {
-    polygon = [[-1.1, -0.85], [1.1, -0.85], [0, 1.0]];
+    crossSection = [[-1.1, 0], [1.1, 0], [0, 1.85]];
   }
-  const n = polygon.length;
+  const n = crossSection.length;
   const vertices = [];
-  if (mode === "hp") {
-    // Axis initially perpendicular to HP (z direction), parallel to VP.
-    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, 0)));
-    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, height)));
-  } else {
-    // Axis initially perpendicular to VP (y direction), parallel to HP.
-    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, 0, Math.max(0, z + 0.9))));
-    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, height, Math.max(0, z + 0.9))));
-  }
+  const x0 = -length / 2;
+  const x1 = length / 2;
+  // First triangular end, then the corresponding second triangular end.
+  crossSection.forEach(([y, z]) => vertices.push(new THREE.Vector3(x0, y, z)));
+  crossSection.forEach(([y, z]) => vertices.push(new THREE.Vector3(x1, y, z)));
   const edgeList = [];
   for (let i = 0; i < n; i++) {
     edgeList.push([i, (i + 1) % n]);
@@ -312,14 +310,19 @@ function rebuildSolid() {
 function rotateAndLift(v, angle) {
   const c = Math.cos(angle), s = Math.sin(angle);
   if (inclinationMode.value === "vp") {
-    // Axis lies in HP (z unchanged) and rotates away from VP around z.
+    // Mode B: inclined to VP, parallel to HP.
+    // Rotate the longitudinal X-axis about Z: its Z component remains zero,
+    // while its Y component becomes sin(angle), giving the requested angle to VP.
     return new THREE.Vector3(v.x * c - v.y * s, v.x * s + v.y * c, v.z);
   }
-  // Axis stays parallel to VP and tilts away from HP by rotation about y.
-  const x = v.x * c + v.z * s;
-  const y = v.y;
-  const z = -v.x * s + v.z * c;
-  return new THREE.Vector3(x, y, z);
+  // Mode A: inclined to HP, parallel to VP.
+  // Rotate the longitudinal X-axis about Y: its Y component remains zero,
+  // while its Z component becomes -sin(angle), giving the requested angle to HP.
+  return new THREE.Vector3(
+    v.x * c + v.z * s,
+    v.y,
+    -v.x * s + v.z * c
+  );
 }
 
 function getTransformedVertices() {
@@ -371,7 +374,7 @@ function updateModel() {
   solidGroup.position.set(0, 0, 0);
   renderProjections(data);
   angleLabel.textContent = `${angleSlider.value}°`;
-  angleModeLabel.textContent = inclinationMode.value === "vp" ? "Inclination to HP" : "Inclination to VP";
+  angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
 }
 
 function clearGroup(group) {
@@ -502,7 +505,7 @@ animate();
 
 angleSlider.addEventListener("input", updateModel);
 inclinationMode.addEventListener("change", () => {
-  angleModeLabel.textContent = inclinationMode.value === "vp" ? "Inclination to HP" : "Inclination to VP";
+  angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
   rebuildSolid();
 });
 solidSelect.addEventListener("change", rebuildSolid);
@@ -510,7 +513,7 @@ guideSelect.addEventListener("change", updateModel);
 document.getElementById("resetBtn").addEventListener("click", () => {
   angleSlider.value = "30";
   inclinationMode.value = "vp";
-  angleModeLabel.textContent = "Inclination to HP";
+  angleModeLabel.textContent = "Inclination to VP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
   resetCameraView();
