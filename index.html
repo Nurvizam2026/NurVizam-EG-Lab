@@ -70,6 +70,13 @@
             <option value="away">Away from reference plane</option>
           </select>
         </label>
+        <label class="field" id="restingConditionField">
+          <span>Resting condition</span>
+          <select id="restingCondition" aria-label="Resting condition">
+            <option value="automatic">Automatic (current behavior)</option>
+          </select>
+          <small id="restingStatus" class="field-help" aria-live="polite">Choose a contact feature to keep it on the selected reference plane.</small>
+        </label>
         <label class="field">
           <span>Show projection guides</span>
           <select id="guideSelect">
@@ -183,6 +190,6 @@
       }
     });
   </script>
-  <script type="module" src="./app.js?v=3"></script>
+  <script type="module" src="./app.js?v=4"></script>
 </body>
 </html>

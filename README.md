@@ -3,7 +3,10 @@
 Interactive Engineering Graphics teaching prototype for solids inclined to HP or VP.
 
 ## Features
-- Triangular and square prism models
+- Triangular, square, pentagonal and hexagonal prisms; matching pyramids; cylinder and cone
+- Resting-condition selector for base face, base edge, corner/apex, slant edge and generator where geometrically applicable
+- Contact features are constrained to HP or VP; incompatible options are disabled for the selected angle/direction
+- Apex direction (towards/away from the selected reference plane) for pyramids and cones
 - Separate inclination modes: inclined to HP / parallel to VP, and inclined to VP / parallel to HP
 - 3D HP and VP reference planes with labels
 - First-angle orthographic sheet with front view, top view, XY line, and projectors
@@ -14,7 +17,7 @@ Interactive Engineering Graphics teaching prototype for solids inclined to HP or
 This is a static site. Deploy the folder contents to the root of a GitHub Pages repository. The browser needs internet access to load Three.js. The app tries jsDelivr, unpkg, and esm.sh in sequence. If all are blocked, the 3D model cannot load.
 
 ## Educational limitation
-This is a learning visualization, not a complete engineering drawing solver. Hidden-edge classification is an approximate geometric visibility test and should be checked against the exact textbook construction and projection convention for each solid.
+This is a learning visualization, not a complete engineering drawing solver. Hidden-edge classification is an approximate geometric visibility test. Resting options are enabled only when the selected feature can geometrically lie on the reference plane at the current angle and apex direction; this avoids displaying an impossible contact condition.
 
 ## Camera and loading fixes
 - Uses a local lightweight orbit controller with Z-up coordinates, so OrbitControls is no longer a second external dependency.
