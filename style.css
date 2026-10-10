@@ -94,3 +94,32 @@ footer { display: flex; justify-content: space-between; gap: 12px; padding: 22px
   .projection-grid { gap: 7px; }.projection-card { padding: 8px 6px; }.projection-card h3 { font-size: 12px; }
   footer { flex-direction: column; gap: 4px; }
 }
+
+
+/* Orthographic drawing sheet: front view above XY, top view below XY */
+.drawing-sheet {
+  position: relative;
+  border: 1px solid #dfe5ee;
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(#f7f9fc 1px, transparent 1px),
+    linear-gradient(90deg, #f7f9fc 1px, transparent 1px),
+    #fff;
+  background-size: 20px 20px;
+}
+.drawing-sheet svg { display: block; width: 100%; height: auto; }
+.sheet-label {
+  position: absolute;
+  z-index: 1;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: rgba(255,255,255,.92);
+  color: #647089;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  pointer-events: none;
+}
+.sheet-front { top: 10px; left: 12px; }
+.sheet-top { bottom: 10px; left: 12px; }

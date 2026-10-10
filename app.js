@@ -15,7 +15,7 @@ const quizFeedback = document.getElementById("quizFeedback");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#f4f7fb");
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-camera.position.set(7.8, -9.5, 7.2);
+camera.position.set(0, -11.5, 7.0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -29,7 +29,7 @@ loading.hidden = true;
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.target.set(0, 0, 1.2);
+controls.target.set(0, 0, 1.25);
 controls.minDistance = 5;
 controls.maxDistance = 18;
 controls.maxPolarAngle = Math.PI * 0.49;
@@ -53,7 +53,7 @@ hp.position.z = -0.015;
 scene.add(hp);
 const vp = makePlane(10, 5.5, "#e38a3c", 0.11);
 vp.rotation.x = Math.PI / 2;
-vp.position.y = -2.6;
+vp.position.y = 2.6;
 vp.position.z = 2.3;
 scene.add(vp);
 
@@ -69,6 +69,8 @@ scene.add(axes);
 
 let solidGroup = new THREE.Group();
 scene.add(solidGroup);
+const projectionGroup = new THREE.Group();
+scene.add(projectionGroup);
 let rawVertices = [];
 let edges = [];
 let currentVertices = [];
@@ -210,40 +212,118 @@ function updateModel() {
   angleLabel.textContent = `${angleSlider.value}°`;
 }
 
-function renderProjections(vertices) {
-  const configs = [
-    { id: "frontSvg", project: v => [v.x, v.z] },
-    { id: "topSvg", project: v => [v.x, v.y] },
-    { id: "sideSvg", project: v => [v.y, v.z] }
-  ];
-  configs.forEach(config => {
-    const svg = document.getElementById(config.id);
-    const points = vertices.map(config.project);
-    const minX = Math.min(...points.map(p => p[0])), maxX = Math.max(...points.map(p => p[0]));
-    const minY = Math.min(...points.map(p => p[1])), maxY = Math.max(...points.map(p => p[1]));
-    const spanX = Math.max(maxX - minX, 0.1), spanY = Math.max(maxY - minY, 0.1);
-    const scale = Math.min(200 / spanX, 132 / spanY);
-    const offsetX = 130 - ((minX + maxX) / 2) * scale;
-    const offsetY = 94 + ((minY + maxY) / 2) * scale;
-    const mapPoint = p => [offsetX + p[0] * scale, offsetY - p[1] * scale];
-    const mapped = points.map(mapPoint);
-    const showGuides = guideSelect.value === "on";
-    let markup = "";
-    // subtle center/reference line
-    markup += `<line x1="16" y1="94" x2="244" y2="94" stroke="#dbe3ee" stroke-width="1" stroke-dasharray="3 4"/>`;
-    if (showGuides) {
-      const baseline = config.id === "topSvg" ? 94 : 164;
-      markup += `<line x1="16" y1="${baseline}" x2="244" y2="${baseline}" stroke="#168b8b" stroke-width="1.5" stroke-dasharray="5 4"/>`;
-    }
+function clearGroup(group) {
+  while (group.children.length) {
+    const child = group.children.pop();
+    child.geometry?.dispose();
+    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+    else child.material?.dispose();
+  }
+}
+
+function addLineSegments(group, segments, color, opacity = 1, dashed = false) {
+  if (!segments.length) return;
+  const positions = [];
+  segments.forEach(([a, b]) => {
+    positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  });
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  const material = dashed
+    ? new THREE.LineDashedMaterial({ color, transparent: opacity < 1, opacity, dashSize: 0.11, gapSize: 0.08 })
+    : new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity });
+  const lines = new THREE.LineSegments(geometry, material);
+  if (dashed) lines.computeLineDistances();
+  group.add(lines);
+}
+
+function renderPlaneProjections(vertices) {
+  clearGroup(projectionGroup);
+  const hpEdges = [];
+  const vpEdges = [];
+  const projectors = [];
+
+  edges.forEach(([a, b]) => {
+    const va = vertices[a], vb = vertices[b];
+    // Project each model edge orthogonally onto HP (z = 0).
+    hpEdges.push([
+      new THREE.Vector3(va.x, va.y, 0.025),
+      new THREE.Vector3(vb.x, vb.y, 0.025)
+    ]);
+    // Project each model edge orthogonally onto VP (y = 2.6).
+    vpEdges.push([
+      new THREE.Vector3(va.x, 2.575, va.z),
+      new THREE.Vector3(vb.x, 2.575, vb.z)
+    ]);
+    // Construction projectors from every 3D vertex to each reference plane.
+    projectors.push([va, new THREE.Vector3(va.x, va.y, 0.04)]);
+    projectors.push([va, new THREE.Vector3(va.x, 2.575, va.z)]);
+  });
+
+  if (guideSelect.value === "on") {
+    addLineSegments(projectionGroup, projectors, "#7c8ca5", 0.62, true);
+  }
+  addLineSegments(projectionGroup, hpEdges, "#087f8c", 0.98, false);
+  addLineSegments(projectionGroup, vpEdges, "#d9772c", 0.98, false);
+}
+
+function renderDrawingSheet(vertices) {
+  const svg = document.getElementById("drawingSheet");
+  if (!svg) return;
+
+  const front = vertices.map(v => [v.x, v.z]);
+  const top = vertices.map(v => [v.x, v.y]);
+  const allX = [...front, ...top].map(p => p[0]);
+  const minX = Math.min(...allX), maxX = Math.max(...allX);
+  const minH = Math.min(...front.map(p => p[1]));
+  const maxH = Math.max(...front.map(p => p[1]));
+  const minD = Math.min(...top.map(p => p[1]));
+  const maxD = Math.max(...top.map(p => p[1]));
+
+  // One common scale preserves relative dimensions between front and top views.
+  const scale = Math.min(230 / Math.max(maxX - minX, 0.1), 145 / Math.max(maxH - minH, 0.1), 105 / Math.max(maxD - minD, 0.1));
+  const cx = 350 - ((minX + maxX) / 2) * scale;
+  const xyY = 250;
+  const mapFront = p => [cx + p[0] * scale, xyY - (p[1] - minH) * scale - 24];
+  const mapTop = p => [cx + p[0] * scale, xyY + 24 + (p[1] - minD) * scale];
+
+  const frontPts = front.map(mapFront);
+  const topPts = top.map(mapTop);
+  const showGuides = guideSelect.value === "on";
+  let markup = `
+    <rect x="0" y="0" width="700" height="500" fill="transparent"/>
+    <line x1="28" y1="${xyY}" x2="672" y2="${xyY}" stroke="#172033" stroke-width="1.8"/>
+    <text x="648" y="${xyY - 9}" fill="#172033" font-size="13" font-weight="800">X Y</text>
+    <text x="350" y="26" text-anchor="middle" fill="#647089" font-size="11" letter-spacing="1.5">ORTHOGRAPHIC PROJECTION · FIRST-ANGLE LAYOUT</text>
+    <text x="35" y="48" fill="#647089" font-size="11">FRONT VIEW</text>
+    <text x="35" y="477" fill="#647089" font-size="11">TOP VIEW</text>
+  `;
+
+  // Projectors: corresponding points share x coordinates across XY.
+  if (showGuides) {
+    vertices.forEach((v, i) => {
+      const xf = frontPts[i][0], yf = frontPts[i][1], yt = topPts[i][1];
+      markup += `<line x1="${xf.toFixed(2)}" y1="${yf.toFixed(2)}" x2="${xf.toFixed(2)}" y2="${yt.toFixed(2)}" stroke="#8b98aa" stroke-width="1" stroke-dasharray="4 4"/>`;
+    });
+  }
+
+  function drawEdges(mapped, color) {
     edges.forEach(([a, b]) => {
       const [x1, y1] = mapped[a], [x2, y2] = mapped[b];
-      markup += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="#275dad" stroke-width="2" stroke-linecap="round"/>`;
+      markup += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${color}" stroke-width="2.2" stroke-linecap="round"/>`;
     });
     mapped.forEach(([x, y]) => {
-      markup += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.5" fill="#194887"/>`;
+      markup += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.5" fill="${color}"/>`;
     });
-    svg.innerHTML = markup;
-  });
+  }
+  drawEdges(frontPts, "#d9772c");
+  drawEdges(topPts, "#087f8c");
+  svg.innerHTML = markup;
+}
+
+function renderProjections(vertices) {
+  renderPlaneProjections(vertices);
+  renderDrawingSheet(vertices);
 }
 
 function resize() {
@@ -271,8 +351,8 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   angleSlider.value = "30";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
-  camera.position.set(7.8, -9.5, 7.2);
-  controls.target.set(0, 0, 1.2);
+  camera.position.set(0, -11.5, 7.0);
+  controls.target.set(0, 0, 1.25);
   controls.update();
   hintBox.hidden = true;
   quizFeedback.hidden = true;

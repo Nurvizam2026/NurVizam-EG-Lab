@@ -7,14 +7,15 @@ An interactive, static GitHub Pages learning app for Engineering Graphics: solid
 - Three.js 3D model with camera orbit (drag), zoom (scroll/pinch)
 - Triangular prism and square prism
 - Inclination slider
-- Synchronized front, top and side wireframe projections
+- Front and top projections drawn directly on the VP and HP reference planes in the 3D scene
+- A separate orthographic drawing sheet with XY line, front view above XY, top view below XY, and corresponding projectors
 - Projection-guide toggle
 - Guided hint, explanation and a short quiz
 - Responsive layout for phones and computers
 
 ## Important teaching/geometry note
 
-This is an introductory visualization aid, not a complete exam-drawing solver. It rotates the solid around the global y-axis, then translates it vertically so its lowest vertex stays on HP. The SVGs show all projected edges as solid lines; hidden-line classification and textbook-specific hinge constructions are not implemented. Verify the construction against the convention used in your course before using it as an authoritative solution.
+This is an introductory visualization aid, not a complete exam-drawing solver. It rotates the solid around the global y-axis, then translates it vertically so its lowest vertex stays on HP. The 3D planes show projected edges and construction projectors; the separate sheet uses a first-angle front/top layout. All projected edges are currently drawn as solid lines; hidden-line classification and textbook-specific hinge constructions are not implemented. Verify the construction against the convention used in your course before using it as an authoritative solution.
 
 ## Deploy to GitHub Pages
 

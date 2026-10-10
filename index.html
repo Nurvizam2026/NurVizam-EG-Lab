@@ -83,21 +83,12 @@
           <div><p class="eyebrow">ORTHOGRAPHIC VIEWS</p><h2>What do you see?</h2></div>
           <span class="mini-tag">Updates live</span>
         </div>
-        <div class="projection-grid">
-          <section class="projection-card">
-            <h3>Front view</h3><p>Projection on VP</p>
-            <div class="svg-wrap"><svg id="frontSvg" viewBox="0 0 260 190" role="img" aria-label="Front orthographic projection"></svg></div>
-          </section>
-          <section class="projection-card">
-            <h3>Top view</h3><p>Projection on HP</p>
-            <div class="svg-wrap"><svg id="topSvg" viewBox="0 0 260 190" role="img" aria-label="Top orthographic projection"></svg></div>
-          </section>
-          <section class="projection-card side-card">
-            <h3>Side view</h3><p>Profile projection</p>
-            <div class="svg-wrap"><svg id="sideSvg" viewBox="0 0 260 190" role="img" aria-label="Side orthographic projection"></svg></div>
-          </section>
+        <div class="drawing-sheet">
+          <div class="sheet-label sheet-front">FRONT VIEW · VP</div>
+          <div class="sheet-label sheet-top">TOP VIEW · HP</div>
+          <svg id="drawingSheet" viewBox="0 0 700 500" role="img" aria-label="Orthographic drawing sheet with front view above XY and top view below XY"></svg>
         </div>
-        <p class="projection-note"><strong>Read the views:</strong> front view uses horizontal position and height; top view uses horizontal position and depth; side view uses depth and height.</p>
+        <p class="projection-note"><strong>First-angle layout:</strong> front view is above XY; top view is below XY. Thin vertical projectors connect corresponding points. The same projections are shown on the VP and HP in the 3D model.</p>
       </article>
     </section>
 
