@@ -16,6 +16,9 @@ const quizFeedback = document.getElementById("quizFeedback");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#f4f7fb");
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+// This scene uses engineering-graphics coordinates: X horizontal, Y depth, Z vertical.
+// Three.js defaults to Y-up, so explicitly make Z the vertical axis.
+camera.up.set(0, 0, 1);
 camera.position.set(0, -12.5, 7.2);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -27,6 +30,7 @@ renderer.domElement.setAttribute("aria-label", "Interactive 3D prism. Drag to ro
 sceneWrap.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.up.set(0, 0, 1);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.target.set(0, -1.1, 1.65);
@@ -249,7 +253,7 @@ function getTransformedVertices() {
   const rotated = rawVertices.map(v => rotateAndLift(v, angle));
   const minZ = Math.min(...rotated.map(v => v.z));
   // Keep the solid above HP (z >= 0) and on the viewer side of VP (y < 0).
-  return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, v.z - minZ + 0.08));
+  return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, Math.max(0.08, v.z - minZ + 0.08)));
 }
 
 function updateModel() {
@@ -345,13 +349,8 @@ function renderDrawingSheet(vertices) {
   const svg = document.getElementById("drawingSheet");
   if (!svg) return;
 
-  // Keep the 3D scene untouched. The current 3D mode mapping is opposite to
-  // the sheet's intended descriptive-geometry mapping, so exchange the depth
-  // and height coordinates for the sheet only. This makes the sheet's FV/TV
-  // reflect the selected dropdown mode without changing the 3D model.
-  const sheetVertices = vertices.map(v => new THREE.Vector3(v.x, v.z, v.y));
-  const front = sheetVertices.map(v => [v.x, v.z]);
-  const top = sheetVertices.map(v => [v.x, v.y]);
+  const front = vertices.map(v => [v.x, v.z]);
+  const top = vertices.map(v => [v.x, v.y]);
   const allX = [...front, ...top].map(p => p[0]);
   const minX = Math.min(...allX), maxX = Math.max(...allX);
   const minH = Math.min(...front.map(p => p[1]));
@@ -380,7 +379,7 @@ function renderDrawingSheet(vertices) {
 
   // Projectors: corresponding points share x coordinates across XY.
   if (showGuides) {
-    sheetVertices.forEach((v, i) => {
+    vertices.forEach((v, i) => {
       const xf = frontPts[i][0], yf = frontPts[i][1], yt = topPts[i][1];
       markup += `<line x1="${xf.toFixed(2)}" y1="${yf.toFixed(2)}" x2="${xf.toFixed(2)}" y2="${yt.toFixed(2)}" stroke="#8b98aa" stroke-width="1" stroke-dasharray="4 4"/>`;
     });
@@ -390,7 +389,7 @@ function renderDrawingSheet(vertices) {
     edges.forEach(edge => {
       const [a, b] = edge;
       const [x1, y1] = mapped[a], [x2, y2] = mapped[b];
-      const hidden = edgeIsHidden(edge, sheetVertices, view);
+      const hidden = edgeIsHidden(edge, vertices, view);
       const dash = hidden ? ' stroke-dasharray="5 4"' : '';
       const opacity = hidden ? ' opacity="0.82"' : '';
       markup += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${color}" stroke-width="2.2" stroke-linecap="round"${dash}${opacity}/>`;
