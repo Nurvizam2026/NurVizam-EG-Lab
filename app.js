@@ -178,45 +178,109 @@ let rawVertices = [];
 let edges = [];
 let currentVertices = [];
 
+let faceTriangles = [];
+
 function makeGeometry(kind) {
-  // The prism's longitudinal axis is the line joining corresponding vertices
-  // of the two end faces. Keep that axis along X in the neutral (0°) position
-  // for BOTH inclination modes. Cross-sections are defined in the YZ plane.
+  // All solids use a common X-axis as their neutral central/longitudinal axis.
+  // Cross-sections are defined in the YZ plane so the established inclination
+  // rotations continue to work without changing the projection sheet.
   const length = 2.7;
-  let crossSection;
-  if (kind === "square") {
-    crossSection = [[-0.9, 0], [0.9, 0], [0.9, 1.8], [-0.9, 1.8]];
-  } else {
-    crossSection = [[-1.1, 0], [1.1, 0], [0, 1.85]];
-  }
-  const n = crossSection.length;
+  const radius = 1.0;
+  const height = 1.9;
+  const sidesByKind = { triangular: 3, square: 4, pentagonal: 5, hexagonal: 6,
+    triangularPyramid: 3, squarePyramid: 4, pentagonalPyramid: 5, hexagonalPyramid: 6,
+    cylinder: 16, cone: 16 };
+  const sides = sidesByKind[kind] || 3;
   const vertices = [];
-  const x0 = -length / 2;
-  const x1 = length / 2;
-  // First triangular end, then the corresponding second triangular end.
-  crossSection.forEach(([y, z]) => vertices.push(new THREE.Vector3(x0, y, z)));
-  crossSection.forEach(([y, z]) => vertices.push(new THREE.Vector3(x1, y, z)));
   const edgeList = [];
-  for (let i = 0; i < n; i++) {
-    edgeList.push([i, (i + 1) % n]);
-    edgeList.push([i + n, ((i + 1) % n) + n]);
-    edgeList.push([i, i + n]);
+  const triangles = [];
+  const ring = (x, count, r = radius) => {
+    const ids = [];
+    for (let i = 0; i < count; i++) {
+      const a = 2 * Math.PI * i / count + Math.PI / 2;
+      ids.push(vertices.length);
+      vertices.push(new THREE.Vector3(x, r * Math.cos(a), r * Math.sin(a)));
+    }
+    return ids;
+  };
+  const addRingEdges = ids => {
+    for (let i = 0; i < ids.length; i++) edgeList.push([ids[i], ids[(i + 1) % ids.length]]);
+  };
+  const addPrismFaces = (left, right) => {
+    for (let i = 1; i < left.length - 1; i++) {
+      triangles.push([left[0], left[i + 1], left[i]]);
+      triangles.push([right[0], right[i], right[i + 1]]);
+    }
+    for (let i = 0; i < left.length; i++) {
+      const j = (i + 1) % left.length;
+      triangles.push([left[i], left[j], right[j]], [left[i], right[j], right[i]]);
+      edgeList.push([left[i], right[i]]);
+    }
+  };
+
+  if (kind === 'cylinder' || kind === 'cone') {
+    const base = ring(-length / 2, sides, radius);
+    addRingEdges(base);
+    // Triangulate the base cap.
+    for (let i = 1; i < sides - 1; i++) triangles.push([base[0], base[i + 1], base[i]]);
+    if (kind === 'cylinder') {
+      const top = ring(length / 2, sides, radius);
+      addRingEdges(top);
+      for (let i = 1; i < sides - 1; i++) triangles.push([top[0], top[i], top[i + 1]]);
+      for (let i = 0; i < sides; i++) {
+        const j = (i + 1) % sides;
+        triangles.push([base[i], base[j], top[j]], [base[i], top[j], top[i]]);
+        edgeList.push([base[i], top[i]]);
+      }
+    } else {
+      const apex = vertices.length;
+      vertices.push(new THREE.Vector3(length / 2, 0, 0));
+      for (let i = 0; i < sides; i++) {
+        const j = (i + 1) % sides;
+        triangles.push([base[i], base[j], apex]);
+        edgeList.push([base[i], apex]);
+      }
+    }
+  } else if (kind.endsWith('Pyramid')) {
+    const base = ring(-length / 2, sides, radius);
+    const apex = vertices.length;
+    vertices.push(new THREE.Vector3(length / 2, 0, 0));
+    addRingEdges(base);
+    for (let i = 1; i < sides - 1; i++) triangles.push([base[0], base[i + 1], base[i]]);
+    for (let i = 0; i < sides; i++) {
+      const j = (i + 1) % sides;
+      triangles.push([base[i], base[j], apex]);
+      edgeList.push([base[i], apex]);
+    }
+  } else {
+    const crossSection = kind === 'square'
+      ? [[-0.9, 0], [0.9, 0], [0.9, 1.8], [-0.9, 1.8]]
+      : kind === 'triangular'
+        ? [[-1.1, 0], [1.1, 0], [0, 1.85]]
+        : Array.from({ length: sides }, (_, i) => {
+            const a = 2 * Math.PI * i / sides + Math.PI / 2;
+            return [Math.cos(a), Math.sin(a)];
+          });
+    const n = crossSection.length;
+    const left = [], right = [];
+    for (const [y, z] of crossSection) { left.push(vertices.length); vertices.push(new THREE.Vector3(-length / 2, y, z)); }
+    for (const [y, z] of crossSection) { right.push(vertices.length); vertices.push(new THREE.Vector3(length / 2, y, z)); }
+    addPrismFaces(left, right);
+    addRingEdges(left); addRingEdges(right);
   }
-  return { vertices, edges: edgeList, n };
+
+  // Remove duplicate edges while preserving their first-seen order.
+  const seen = new Set();
+  const uniqueEdges = edgeList.filter(([a, b]) => {
+    const key = a < b ? `${a}:${b}` : `${b}:${a}`;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+  return { vertices, edges: uniqueEdges, triangles };
 }
 
 function getFaceTriangles() {
-  const n = rawVertices.length / 2;
-  const triangles = [];
-  for (let i = 1; i < n - 1; i++) {
-    triangles.push([0, i + 1, i]);
-    triangles.push([n, n + i, n + i + 1]);
-  }
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    triangles.push([i, j, j + n], [i, j + n, i + n]);
-  }
-  return triangles;
+  return faceTriangles;
 }
 
 function barycentric2D(p, a, b, c) {
@@ -262,48 +326,32 @@ function rebuildSolid() {
   const data = makeGeometry(solidSelect.value);
   rawVertices = data.vertices;
   edges = data.edges;
-  const faces = [];
-  const n = data.n;
-  // bottom polygon, top polygon, and side quads
-  for (let i = 1; i < n - 1; i++) {
-    faces.push(0, i + 1, i);
-    faces.push(n, n + i, n + i + 1);
-  }
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    faces.push(i, j, j + n, i, j + n, i + n);
-  }
+  faceTriangles = data.triangles;
   const positions = [];
-  faces.forEach(index => {
-    const v = rawVertices[index];
-    positions.push(v.x, v.y, v.z);
-  });
+  faceTriangles.forEach(tri => tri.forEach(index => {
+    const v = rawVertices[index]; positions.push(v.x, v.y, v.z);
+  }));
   const geom = new THREE.BufferGeometry();
-  geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geom.computeVertexNormals();
   const mesh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({
-    color: "#5d8fd6", roughness: 0.58, metalness: 0.02, side: THREE.DoubleSide,
+    color: '#5d8fd6', roughness: 0.58, metalness: 0.02, side: THREE.DoubleSide,
     transparent: true, opacity: 0.38
   }));
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
+  mesh.castShadow = true; mesh.receiveShadow = true;
   solidGroup.add(mesh);
-
   const linePositions = [];
   edges.forEach(([a, b]) => {
     const va = rawVertices[a], vb = rawVertices[b];
     linePositions.push(va.x, va.y, va.z, vb.x, vb.y, vb.z);
   });
   const lineGeom = new THREE.BufferGeometry();
-  lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
-  const lines = new THREE.LineSegments(lineGeom, new THREE.LineBasicMaterial({ color: "#194887", linewidth: 2 }));
-  solidGroup.add(lines);
-
-  const points = new THREE.Points(
+  lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+  solidGroup.add(new THREE.LineSegments(lineGeom, new THREE.LineBasicMaterial({ color: '#194887', linewidth: 2 })));
+  solidGroup.add(new THREE.Points(
     new THREE.BufferGeometry().setFromPoints(rawVertices),
-    new THREE.PointsMaterial({ color: "#194887", size: 0.075, sizeAttenuation: true })
-  );
-  solidGroup.add(points);
+    new THREE.PointsMaterial({ color: '#194887', size: 0.075, sizeAttenuation: true })
+  ));
   updateModel();
 }
 
@@ -337,28 +385,19 @@ function updateModel() {
   const angle = Number(angleSlider.value) * Math.PI / 180;
   currentVertices = getTransformedVertices();
   solidGroup.rotation.set(0, 0, 0);
-  // Rebuild transformed mesh positions from canonical vertices for exact agreement
-  // between the 3D model and SVG projections.
+  // Rebuild transformed mesh positions from the shared face list so the 3D
+  // model and orthographic projections use exactly the same transformed points.
   const mesh = solidGroup.children[0];
   const lines = solidGroup.children[1];
   const points = solidGroup.children[2];
   const data = currentVertices;
-  const n = rawVertices.length / 2;
-  const polygonN = n;
-  const faces = [];
-  for (let i = 1; i < polygonN - 1; i++) {
-    faces.push(0, i + 1, i);
-    faces.push(polygonN, polygonN + i, polygonN + i + 1);
-  }
-  for (let i = 0; i < polygonN; i++) {
-    const j = (i + 1) % polygonN;
-    faces.push(i, j, j + polygonN, i, j + polygonN, i + polygonN);
-  }
   const pos = [];
-  faces.forEach(index => { const v = data[index]; pos.push(v.x, v.y, v.z); });
+  faceTriangles.forEach(tri => tri.forEach(index => {
+    const v = data[index]; pos.push(v.x, v.y, v.z);
+  }));
   mesh.geometry.dispose();
   mesh.geometry = new THREE.BufferGeometry();
-  mesh.geometry.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  mesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   mesh.geometry.computeVertexNormals();
   const linePos = [];
   edges.forEach(([a, b]) => {
@@ -367,7 +406,7 @@ function updateModel() {
   });
   lines.geometry.dispose();
   lines.geometry = new THREE.BufferGeometry();
-  lines.geometry.setAttribute("position", new THREE.Float32BufferAttribute(linePos, 3));
+  lines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
   points.geometry.dispose();
   points.geometry = new THREE.BufferGeometry().setFromPoints(data);
   // Keep the object around the center of the workspace.
