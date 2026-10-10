@@ -8,18 +8,21 @@
   <link rel="stylesheet" href="./both-planes.css">
 </head>
 <body>
-  
-<nav class="module-navigation">
-  <a href="./index.html">← Single-Plane Experiment</a>
-  <a href="./both-planes.html">Both-Planes Experiment</a>
-</nav>
-
   <header class="topbar">
     <a class="brand" href="./" aria-label="Return to the original Nurvizam Engineering Graphics Lab">
       <span class="brand-mark">N</span>
       <span><strong>NURVIZAM</strong><small>ENGINEERING GRAPHICS LAB</small></span>
     </a>
-    <span class="pill">MODULE 02 · BOTH PLANES</span>
+    <nav class="module-nav" aria-label="Engineering Graphics experiments">
+      <a class="module-link" href="./index.html">
+        <span class="module-number">01</span>
+        <span class="module-link-copy"><strong>Single-plane</strong><small>Inclined to HP or VP</small></span>
+      </a>
+      <a class="module-link is-active" href="./both-planes.html" aria-current="page">
+        <span class="module-number">02</span>
+        <span class="module-link-copy"><strong>Both planes</strong><small>Inclined to HP and VP</small></span>
+      </a>
+    </nav>
   </header>
   <main class="page">
     <section class="intro">
@@ -65,7 +68,7 @@
     </section>
 
     <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>For the base-edge conditions, choose which polygon base edge is used for the second inclination constraint. Curved solids do not have a polygonal base edge, so these conditions are disabled for cylinder and cone.</li></ol><p class="small-note">This is an educational visualizer. Check construction steps, contact conditions and visible/hidden-edge conventions against the prescribed engineering-drawing method for the specific problem.</p></section>
-    <footer class="footer"><strong>Nurvizam Engineering Graphics Lab</strong><span>Module 02 · Solids inclined to both HP and VP</span><a href="./">Return to the original experiment</a><span>Developed by Dr. Mohammed Shafeeque KK · Ph.D., IIT Palakkad</span></footer>
+    <footer class="footer"><strong>Nurvizam Engineering Graphics Lab</strong><span>Module 02 · Solids inclined to both HP and VP</span><a href="./index.html">Open Module 01: Single-plane experiment</a><span>Developed by Dr. Mohammed Shafeeque KK · Ph.D., IIT Palakkad</span></footer>
   </main>
   <script type="module" src="./both-planes.js"></script>
 </body>
