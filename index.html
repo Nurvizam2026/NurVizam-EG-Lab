@@ -132,6 +132,14 @@
     </section>
     <footer><span>Nurvizam Engineering Concepts</span><span>Learn · Visualize · Explain</span></footer>
   </main>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
   <script>
     window.addEventListener('error', function (event) {
       const wrap = document.getElementById('sceneWrap');
@@ -154,6 +162,6 @@
       }
     });
   </script>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=3"></script>
 </body>
 </html>

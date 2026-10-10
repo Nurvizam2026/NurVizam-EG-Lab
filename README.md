@@ -20,3 +20,4 @@ This is a learning visualization, not a complete engineering drawing solver. Hid
 - Uses a local lightweight orbit controller with Z-up coordinates, so OrbitControls is no longer a second external dependency.
 - Tries multiple Three.js CDN sources and reports a more useful error if all fail.
 - Run through GitHub Pages or a local HTTP server; ES modules generally do not work when opening `index.html` directly with `file://`.
+\n\n## Fix for `Failed to resolve module specifier 'three'`\nThe page includes an import map for `three` and `three/addons/` and cache-busts `app.js`. Upload **all files** in this folder to the repository root (or keep the `nurvizam-eg-lab` folder structure consistently). Do not upload only `index.html`; `index.html` and `app.js` must come from the same ZIP version. Hard-refresh after deployment (Ctrl+F5).\n
