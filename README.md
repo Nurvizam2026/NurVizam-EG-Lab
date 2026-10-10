@@ -1,32 +1,40 @@
 # Nurvizam Engineering Graphics Lab
 
-Interactive Engineering Graphics teaching prototype for solids inclined to HP or VP.
+Interactive Engineering Graphics learning resource for understanding the projection of solids inclined to HP or VP.
+
+## Author
+- **Dr. Mohammed Shafeeque KK**
+- **Ph.D., IIT Palakkad**
+- Academic interests: Engineering Graphics, Computational Mechanics, and Fracture Mechanics
+
+## Educational scope
+The lab lets students explore prisms, pyramids, cylinders, and cones; adjust the inclination condition and angle; select applicable apex direction and resting conditions; and compare the 3D orientation with front and top orthographic views. The drawing sheet follows the first-angle layout: FV above XY and TV below XY.
 
 ## Features
-- Triangular, square, pentagonal and hexagonal prisms; matching pyramids; cylinder and cone
-- Resting-condition selector for base face, base edge, corner/apex, slant edge and generator where geometrically applicable
-- Contact features are constrained to HP or VP; incompatible options are disabled for the selected angle/direction
-- Apex direction (towards/away from the selected reference plane) for pyramids and cones
-- Separate inclination modes: inclined to HP / parallel to VP, and inclined to VP / parallel to HP
-- 3D HP and VP reference planes with labels
-- First-angle orthographic sheet with front view, top view, XY line, and projectors
-- Hidden edges shown with dashed lines in orthographic views and on the projected reference planes
-- Visible fallback drawing labels and an on-screen error message if the 3D module fails to start
+- Triangular, square, pentagonal, and hexagonal prisms
+- Triangular, square, pentagonal, and hexagonal pyramids
+- Cylinder and cone
+- Inclination to HP while parallel to VP, or inclination to VP while parallel to HP
+- Angle control from 0° to 90°
+- Apex direction towards or away from the selected reference plane for applicable pyramids and cones
+- Resting-condition selector for base, base edge, corner/apex, slant edge, and generator where geometrically applicable
+- HP and VP reference planes, projection guides, front view, top view, XY reference line, and first-angle drawing-sheet arrangement
+- Mobile layout showing the 3D model and 2D drawing sheet together
+- Synchronized geometry for the 3D model and orthographic views
 
-## Run/deploy
-This is a static site. Deploy the folder contents to the root of a GitHub Pages repository. The browser needs internet access to load Three.js. The app tries jsDelivr, unpkg, and esm.sh in sequence. If all are blocked, the 3D model cannot load.
+## Projection conventions
+- HP is the horizontal plane; VP is the vertical plane.
+- XY is the line of intersection of HP and VP.
+- In first-angle projection, the front view is placed above XY and the top view below XY.
+- A point or edge lying in HP projects onto XY in the front view. A point or edge lying in VP projects onto XY in the top view.
+- A line parallel to a projection plane appears in true length in the corresponding orthographic view; an inclined line is generally foreshortened.
+- The 3D camera can be orbited independently; orbiting the camera changes the viewing angle, not the solid's engineering orientation.
 
-## Educational limitation
-This is a learning visualization, not a complete engineering drawing solver. Hidden-edge classification is an approximate geometric visibility test. Resting options are enabled only when the selected feature can geometrically lie on the reference plane at the current angle and apex direction; this avoids displaying an impossible contact condition.
+## Important educational note
+This is an interactive learning aid, not a replacement for the construction procedure required by a particular engineering-drawing problem. The available resting conditions depend on the selected solid and geometry. For formal drawings, check the exact hinge construction, dimensions, contact condition, projection convention, and visible/hidden-edge treatment against the prescribed method. Hidden-edge visibility is a visualization aid and may require independent verification for assessed drawings.
 
-## Camera and loading fixes
-- Uses a local lightweight orbit controller with Z-up coordinates, so OrbitControls is no longer a second external dependency.
-- Tries multiple Three.js CDN sources and reports a more useful error if all fail.
-- Run through GitHub Pages or a local HTTP server; ES modules generally do not work when opening `index.html` directly with `file://`.
-\n\n## Fix for `Failed to resolve module specifier 'three'`\nThe page includes an import map for `three` and `three/addons/` and cache-busts `app.js`. Upload **all files** in this folder to the repository root (or keep the `nurvizam-eg-lab` folder structure consistently). Do not upload only `index.html`; `index.html` and `app.js` must come from the same ZIP version. Hard-refresh after deployment (Ctrl+F5).\n
+## Run and deploy
+This is a static website intended for GitHub Pages. Upload `index.html`, `style.css`, `app.js`, and this README to the repository root. The browser needs internet access to load the Three.js module. Open the site through GitHub Pages or a local HTTP server rather than opening `index.html` directly using `file://`.
 
-## Symmetric corner-resting update
-
-For regular pyramids and cones, when the apex is the selected contact point, the corner condition now searches for a symmetric orientation in which two adjacent base vertices have equal distance from HP or VP. Their corresponding equal-length slant edges/generators are therefore equally inclined to the reference plane. The apex must remain the supporting extreme. If no valid orientation exists at the current angle/direction, that condition is unavailable rather than showing an invalid contact.
-
-The non-apex corner behavior and all other resting conditions are unchanged. The mobile two-panel layout is included.
+## Change safety
+The text update changes explanatory copy, the quiz wording/feedback, accessible model description, creator details, and creator-section styling. It does not change geometry construction, inclination transforms, resting-condition calculations, or orthographic projection calculations.

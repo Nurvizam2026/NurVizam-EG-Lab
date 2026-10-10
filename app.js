@@ -87,7 +87,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.domElement.setAttribute("aria-label", "Interactive 3D prism. Drag to rotate the camera.");
+renderer.domElement.setAttribute("aria-label", "Interactive 3D model of the selected solid. Drag to orbit the camera; use the controls to change the solid orientation.");
 sceneWrap.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -815,11 +815,11 @@ answerBtn.addEventListener("click", () => {
 document.querySelectorAll(".quiz-option").forEach(button => {
   button.addEventListener("click", () => {
     quizFeedback.hidden = false;
-    const correct = button.dataset.answer === "no";
+    const correct = button.dataset.answer === "true-length";
     quizFeedback.className = correct ? "feedback correct" : "feedback";
     quizFeedback.textContent = correct
-      ? "Correct. In this model, the prism's axis tilts away from vertical, so its vertical component in the front view is shorter than its true length."
-      : "Try again. The physical axis keeps its true length, but an orthographic view shows its projected components, which can be shorter.";
+      ? "Correct. An edge parallel to VP is parallel to the plane of projection, so its front view shows the true length."
+      : "Not quite. An edge parallel to VP is parallel to the front-view projection plane, so its front view shows the true length.";
   });
 });
 

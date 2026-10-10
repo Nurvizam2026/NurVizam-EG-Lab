@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1220">
-  <title>Nurvizam EG Lab | Inclined Solids</title>
+  <title>Projection of Solids | Nurvizam Engineering Graphics Lab</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -18,16 +18,16 @@
 
   <main class="page">
     <section class="intro">
-      <p class="eyebrow">INTERACTIVE LEARNING</p>
-      <h1>Solids inclined to one plane</h1>
-      <p class="lede">Choose the plane of inclination, inspect the 3D solid, and compare both orthographic views.</p>
+      <p class="eyebrow">INTERACTIVE ENGINEERING GRAPHICS</p>
+      <h1>Projection of Solids</h1>
+      <p class="lede">Explore prisms, pyramids, cylinders and cones inclined to HP or VP. Adjust the inclination angle and applicable resting condition, then compare the 3D solid with its front and top views using first-angle orthographic projection.</p>
     </section>
 
     <section class="controls panel" aria-label="Model controls">
       <div class="control-heading">
         <div>
           <h2>Experiment controls</h2>
-          <p>Try a prediction before checking the views.</p>
+          <p>Select a solid and inclination condition, then compare the 3D orientation with its orthographic views.</p>
         </div>
         <button id="resetBtn" class="button button-quiet" type="button">Reset view</button>
       </div>
@@ -91,7 +91,7 @@
       <article class="panel model-panel">
         <div class="panel-title">
           <div><p class="eyebrow">3D MODEL</p><h2>Explore the solid</h2></div>
-          <span class="mini-tag">Drag to orbit</span>
+          <span class="mini-tag">Drag to orbit camera</span>
         </div>
         <div id="sceneWrap" class="scene-wrap">
         </div>
@@ -120,7 +120,7 @@
             <rect x="280" y="275" width="140" height="100" fill="none" stroke="#087f8c" stroke-width="2" stroke-dasharray="6 5" opacity=".55"/>
           </svg>
         </div>
-        <p class="projection-note"><strong>First-angle layout:</strong> front view is above XY; top view is below XY. Thin vertical projectors connect corresponding points. The same projections are shown on the VP and HP in the 3D model.</p>
+        <p class="projection-note"><strong>First-angle orthographic projection:</strong> The front view (FV) is projected onto VP and placed above the XY reference line. The top view (TV) is projected onto HP and placed below XY. XY represents the intersection of HP and VP. Perpendicular projectors align corresponding points between views. A point or edge lying in HP projects onto XY in the front view; a point or edge lying in VP projects onto XY in the top view. The 3D reference-plane projections and the 2D sheet are derived from the same transformed geometry.</p>
       </article>
     </section>
 
@@ -128,7 +128,7 @@
       <article class="panel hint-panel">
         <p class="eyebrow">THINK BEFORE REVEALING</p>
         <h2>Guided discovery</h2>
-        <p class="question">When the solid tilts, which dimension changes in its front view: the actual length of an edge, or the projected length?</p>
+        <p class="question">During a rigid rotation, which can change in the front view: an edge’s actual 3D length or its projected length?</p>
         <div class="button-row">
           <button id="hintBtn" class="button button-secondary" type="button">Give me a hint</button>
           <button id="answerBtn" class="button button-primary" type="button">Reveal explanation</button>
@@ -138,10 +138,10 @@
       <article class="panel challenge-panel">
         <p class="eyebrow">QUICK CHECK</p>
         <h2>Make a prediction</h2>
-        <p class="question">At a non-zero inclination, will the prism's vertical axis appear at its true length in the front view?</p>
+        <p class="question">An edge is parallel to VP. What length does it show in the front view (FV)?</p>
         <div class="quiz-options">
-          <button class="quiz-option" data-answer="yes" type="button">Yes, always</button>
-          <button class="quiz-option" data-answer="no" type="button">No, its projection is foreshortened</button>
+          <button class="quiz-option" data-answer="true-length" type="button">Its true length</button>
+          <button class="quiz-option" data-answer="foreshortened" type="button">A foreshortened length</button>
         </div>
         <div id="quizFeedback" class="feedback" hidden aria-live="polite"></div>
       </article>
@@ -151,14 +151,21 @@
       <p class="eyebrow">DRAWING METHOD</p>
       <h2>Think in stages</h2>
       <ol class="method-list">
-        <li><span>01</span><div><strong>Start from a simple position</strong><p>Establish the solid's geometry and its principal views before introducing inclination.</p></div></li>
-        <li><span>02</span><div><strong>Introduce the angle</strong><p>Rotate the solid about a defined axis or hinge, following the condition stated in the problem.</p></div></li>
-        <li><span>03</span><div><strong>Project corresponding points</strong><p>Transfer coordinates consistently to the front, top and side views.</p></div></li>
-        <li><span>04</span><div><strong>Check before finalizing</strong><p>Verify dimensions, alignment, visible edges and the projection convention used in your course.</p></div></li>
+        <li><span>01</span><div><strong>Establish the simple position</strong><p>Identify the solid, its base, axis, apex and defining dimensions. Draw the initial front view and top view in the simple position specified by the problem.</p></div></li>
+        <li><span>02</span><div><strong>Apply the inclination condition</strong><p>Incline the specified axis, edge or face to the required angle while maintaining the stated parallelism to the other reference plane. For applicable solids, set the apex direction and resting condition.</p></div></li>
+        <li><span>03</span><div><strong>Project corresponding points</strong><p>Project the final solid onto VP to obtain FV and onto HP to obtain TV. Use perpendicular projectors and keep corresponding points aligned according to first-angle projection.</p></div></li>
+        <li><span>04</span><div><strong>Verify the final views</strong><p>Check the specified inclination, contact with HP or VP, alignment with XY, true and foreshortened lengths, and visible or hidden edges.</p></div></li>
       </ol>
-      <p class="disclaimer">Learning model note: this first version shows a wireframe orthographic projection of a prism rotated to an angle and lifted so it does not pass below HP. It is a visualization aid, not a complete exam-drawing solver. Hidden-line conventions and the exact hinge construction for a particular textbook problem must be checked separately.</p>
+      <p class="disclaimer"><strong>Learning note:</strong> This interactive model illustrates selected solids, inclination conditions, applicable resting conditions and their corresponding front and top views. The result depends on the selected solid, angle, reference plane, apex direction and contact feature. Use the model to understand geometric relationships; for a formal engineering drawing, follow the problem-specific construction method and prescribed projection conventions. Verify exact hinge construction and hidden-edge visibility where required.</p>
     </section>
-    <footer><span>Nurvizam Engineering Concepts</span><span>Learn · Visualize · Explain</span></footer>
+    <section class="creator-panel" aria-labelledby="creator-heading">
+      <p class="eyebrow">ABOUT THE CREATOR</p>
+      <h2 id="creator-heading">Dr. Mohammed Shafeeque KK</h2>
+      <p class="creator-credential"><strong>Ph.D.</strong> · IIT Palakkad</p>
+      <p class="creator-description">Developed as an interactive learning resource for B.Tech Engineering Graphics students, combining 3D visualization with first-angle orthographic projection.</p>
+      <p class="creator-interests"><strong>Academic interests:</strong> Engineering Graphics · Computational Mechanics · Fracture Mechanics</p>
+    </section>
+    <footer><span>Nurvizam Engineering Graphics Lab</span><span>Learn · Visualize · Explain</span></footer>
   </main>
   <script type="importmap">
     {
@@ -190,6 +197,6 @@
       }
     });
   </script>
-  <script type="module" src="./app.js?v=4"></script>
+  <script type="module" src="./app.js?v=5"></script>
 </body>
 </html>
