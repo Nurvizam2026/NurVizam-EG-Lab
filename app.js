@@ -345,8 +345,13 @@ function renderDrawingSheet(vertices) {
   const svg = document.getElementById("drawingSheet");
   if (!svg) return;
 
-  const front = vertices.map(v => [v.x, v.z]);
-  const top = vertices.map(v => [v.x, v.y]);
+  // Keep the 3D scene untouched. The current 3D mode mapping is opposite to
+  // the sheet's intended descriptive-geometry mapping, so exchange the depth
+  // and height coordinates for the sheet only. This makes the sheet's FV/TV
+  // reflect the selected dropdown mode without changing the 3D model.
+  const sheetVertices = vertices.map(v => new THREE.Vector3(v.x, v.z, v.y));
+  const front = sheetVertices.map(v => [v.x, v.z]);
+  const top = sheetVertices.map(v => [v.x, v.y]);
   const allX = [...front, ...top].map(p => p[0]);
   const minX = Math.min(...allX), maxX = Math.max(...allX);
   const minH = Math.min(...front.map(p => p[1]));
@@ -375,7 +380,7 @@ function renderDrawingSheet(vertices) {
 
   // Projectors: corresponding points share x coordinates across XY.
   if (showGuides) {
-    vertices.forEach((v, i) => {
+    sheetVertices.forEach((v, i) => {
       const xf = frontPts[i][0], yf = frontPts[i][1], yt = topPts[i][1];
       markup += `<line x1="${xf.toFixed(2)}" y1="${yf.toFixed(2)}" x2="${xf.toFixed(2)}" y2="${yt.toFixed(2)}" stroke="#8b98aa" stroke-width="1" stroke-dasharray="4 4"/>`;
     });
@@ -385,7 +390,7 @@ function renderDrawingSheet(vertices) {
     edges.forEach(edge => {
       const [a, b] = edge;
       const [x1, y1] = mapped[a], [x2, y2] = mapped[b];
-      const hidden = edgeIsHidden(edge, vertices, view);
+      const hidden = edgeIsHidden(edge, sheetVertices, view);
       const dash = hidden ? ' stroke-dasharray="5 4"' : '';
       const opacity = hidden ? ' opacity="0.82"' : '';
       markup += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${color}" stroke-width="2.2" stroke-linecap="round"${dash}${opacity}/>`;
