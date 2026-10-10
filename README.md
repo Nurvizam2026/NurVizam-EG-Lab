@@ -44,3 +44,11 @@ Then open `http://localhost:8000`.
 - `index.html` — page structure and interface
 - `style.css` — responsive styling
 - `app.js` — 3D scene, model geometry, projections and interactions
+
+
+## Inclination modes
+
+- **Inclined to HP, parallel to VP:** the prism axis starts perpendicular to HP and tilts within a plane parallel to VP.
+- **Inclined to VP, parallel to HP:** the prism axis starts perpendicular to VP and tilts while remaining parallel to HP.
+
+The angle label follows the selected mode. The orthographic drawing sheet remains visible and updates with the 3D model. The loading overlay has been removed so it cannot obscure the model.

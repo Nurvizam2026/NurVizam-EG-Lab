@@ -2,9 +2,10 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const sceneWrap = document.getElementById("sceneWrap");
-const loading = document.getElementById("sceneLoading");
 const angleSlider = document.getElementById("angleSlider");
 const angleLabel = document.getElementById("angleLabel");
+const inclinationMode = document.getElementById("inclinationMode");
+const angleModeLabel = document.getElementById("angleModeLabel");
 const solidSelect = document.getElementById("solidSelect");
 const guideSelect = document.getElementById("guideSelect");
 const hintBtn = document.getElementById("hintBtn");
@@ -24,8 +25,6 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.domElement.setAttribute("aria-label", "Interactive 3D prism. Drag to rotate the camera.");
 sceneWrap.appendChild(renderer.domElement);
-loading.hidden = true;
-loading.remove();
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -54,7 +53,7 @@ hp.position.z = -0.015;
 scene.add(hp);
 const vp = makePlane(10, 5.5, "#e38a3c", 0.11);
 vp.rotation.x = Math.PI / 2;
-vp.position.y = 2.6;
+vp.position.y = -2.6;
 vp.position.z = 2.3;
 scene.add(vp);
 
@@ -79,7 +78,7 @@ function makeLabel(text, color, position, scale = 0.9) {
   return sprite;
 }
 makeLabel("HP · HORIZONTAL PLANE", "#087f8c", new THREE.Vector3(-2.2, -3.0, 0.14), 0.8);
-makeLabel("VP · VERTICAL PLANE", "#c96b23", new THREE.Vector3(2.1, 2.55, 4.8), 0.8);
+makeLabel("VP · VERTICAL PLANE", "#c96b23", new THREE.Vector3(2.1, -2.72, 4.8), 0.8);
 
 function makePlane(w, h, color, opacity) {
   const geometry = new THREE.PlaneGeometry(w, h);
@@ -100,19 +99,25 @@ let edges = [];
 let currentVertices = [];
 
 function makeGeometry(kind) {
-  const depth = 1.65;
   const height = 2.7;
+  const mode = inclinationMode.value;
   let polygon;
   if (kind === "square") {
     polygon = [[-1.0, -0.9], [1.0, -0.9], [1.0, 0.9], [-1.0, 0.9]];
   } else {
     polygon = [[-1.1, -0.85], [1.1, -0.85], [0, 1.0]];
   }
-  // Polygon coordinates are x/y; duplicate at z=0 and z=height.
   const n = polygon.length;
   const vertices = [];
-  polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, 0)));
-  polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, height)));
+  if (mode === "hp") {
+    // Axis initially perpendicular to HP (z direction), parallel to VP.
+    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, 0)));
+    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, height)));
+  } else {
+    // Axis initially perpendicular to VP (y direction), parallel to HP.
+    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, 0, Math.max(0, z + 0.9))));
+    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, height, Math.max(0, z + 0.9))));
+  }
   const edgeList = [];
   for (let i = 0; i < n; i++) {
     edgeList.push([i, (i + 1) % n]);
@@ -179,7 +184,11 @@ function rebuildSolid() {
 
 function rotateAndLift(v, angle) {
   const c = Math.cos(angle), s = Math.sin(angle);
-  // Rotation about y axis. z' = -x sin(a) + z cos(a).
+  if (inclinationMode.value === "vp") {
+    // Axis lies in HP (z unchanged) and rotates away from VP around z.
+    return new THREE.Vector3(v.x * c - v.y * s, v.x * s + v.y * c, v.z);
+  }
+  // Axis stays parallel to VP and tilts away from HP by rotation about y.
   const x = v.x * c + v.z * s;
   const y = v.y;
   const z = -v.x * s + v.z * c;
@@ -234,6 +243,7 @@ function updateModel() {
   solidGroup.position.set(0, 0, 0);
   renderProjections(data);
   angleLabel.textContent = `${angleSlider.value}°`;
+  angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
 }
 
 function clearGroup(group) {
@@ -274,14 +284,14 @@ function renderPlaneProjections(vertices) {
       new THREE.Vector3(va.x, va.y, 0.025),
       new THREE.Vector3(vb.x, vb.y, 0.025)
     ]);
-    // Project each model edge orthogonally onto VP (y = 2.6).
+    // Project each model edge orthogonally onto VP (y = -2.6).
     vpEdges.push([
-      new THREE.Vector3(va.x, 2.575, va.z),
-      new THREE.Vector3(vb.x, 2.575, vb.z)
+      new THREE.Vector3(va.x, -2.575, va.z),
+      new THREE.Vector3(vb.x, -2.575, vb.z)
     ]);
     // Construction projectors from every 3D vertex to each reference plane.
     projectors.push([va, new THREE.Vector3(va.x, va.y, 0.04)]);
-    projectors.push([va, new THREE.Vector3(va.x, 2.575, va.z)]);
+    projectors.push([va, new THREE.Vector3(va.x, -2.575, va.z)]);
   });
 
   if (guideSelect.value === "on") {
@@ -369,10 +379,16 @@ function animate() {
 animate();
 
 angleSlider.addEventListener("input", updateModel);
+inclinationMode.addEventListener("change", () => {
+  angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
+  rebuildSolid();
+});
 solidSelect.addEventListener("change", rebuildSolid);
 guideSelect.addEventListener("change", updateModel);
 document.getElementById("resetBtn").addEventListener("click", () => {
   angleSlider.value = "30";
+  inclinationMode.value = "hp";
+  angleModeLabel.textContent = "Inclination to HP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
   camera.position.set(0, -11.5, 7.0);
