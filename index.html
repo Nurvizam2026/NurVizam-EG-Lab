@@ -6,14 +6,6 @@
   <meta name="theme-color" content="#0b1220">
   <title>Nurvizam EG Lab | Inclined Solids</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
 </head>
 <body>
   <header class="topbar">
@@ -146,16 +138,18 @@
       if (wrap && !wrap.querySelector('.runtime-error')) {
         const error = document.createElement('div');
         error.className = 'runtime-error';
-        error.textContent = '3D model could not start. Refresh the page; if this continues, check the browser console or network access to the Three.js CDN.';
+        const detail = event.message ? ` Details: ${event.message}` : '';
+        error.textContent = '3D model could not start. Check internet access to a Three.js CDN, and make sure the site is opened through GitHub Pages or a local web server (not file://).' + detail;
         wrap.appendChild(error);
       }
     });
-    window.addEventListener('unhandledrejection', function () {
+    window.addEventListener('unhandledrejection', function (event) {
       const wrap = document.getElementById('sceneWrap');
       if (wrap && !wrap.querySelector('.runtime-error')) {
         const error = document.createElement('div');
         error.className = 'runtime-error';
-        error.textContent = '3D libraries failed to load. Check your internet connection and refresh.';
+        const reason = event.reason && event.reason.message ? event.reason.message : String(event.reason || '');
+        error.textContent = '3D model could not start. The app tried multiple Three.js CDNs. Check internet access, then refresh. ' + reason;
         wrap.appendChild(error);
       }
     });

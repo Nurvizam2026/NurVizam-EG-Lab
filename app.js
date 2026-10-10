@@ -1,5 +1,64 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+// Load Three.js from more than one CDN so a single blocked host does not disable the 3D lab.
+async function loadThree() {
+  const sources = [
+    "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "https://esm.sh/three@0.160.0"
+  ];
+  let lastError;
+  for (const source of sources) {
+    try { return await import(source); }
+    catch (error) { lastError = error; console.warn(`Could not load Three.js from ${source}`, error); }
+  }
+  throw new Error(`Three.js could not load from any configured CDN. ${lastError?.message || ""}`);
+}
+
+const THREE = await loadThree();
+
+// Lightweight local orbit controller avoids a separate CDN dependency for OrbitControls.
+class LocalOrbitControls {
+  constructor(camera, element) {
+    this.camera = camera; this.element = element; this.target = new THREE.Vector3();
+    this.minDistance = 5; this.maxDistance = 18; this.maxPolarAngle = Math.PI * 0.49;
+    this.enableDamping = true; this.dampingFactor = 0.07; this.screenSpacePanning = true;
+    this._dragging = false; this._lastX = 0; this._lastY = 0; this._thetaDelta = 0; this._phiDelta = 0; this._radiusScale = 1;
+    element.style.touchAction = "none";
+    element.addEventListener("pointerdown", event => {
+      if (event.button !== 0) return;
+      this._dragging = true; this._lastX = event.clientX; this._lastY = event.clientY;
+      element.setPointerCapture?.(event.pointerId);
+    });
+    element.addEventListener("pointermove", event => {
+      if (!this._dragging) return;
+      const dx = event.clientX - this._lastX, dy = event.clientY - this._lastY;
+      this._lastX = event.clientX; this._lastY = event.clientY;
+      this._thetaDelta -= dx * 0.008; this._phiDelta -= dy * 0.008;
+    });
+    const stopDrag = () => { this._dragging = false; };
+    element.addEventListener("pointerup", stopDrag); element.addEventListener("pointercancel", stopDrag);
+    element.addEventListener("lostpointercapture", stopDrag);
+    element.addEventListener("wheel", event => {
+      event.preventDefault(); this._radiusScale *= Math.exp(event.deltaY * 0.001);
+      this._radiusScale = Math.max(0.75, Math.min(1.35, this._radiusScale));
+    }, { passive: false });
+  }
+  update() {
+    const offset = this.camera.position.clone().sub(this.target);
+    let radius = offset.length() || 1;
+    let theta = Math.atan2(offset.y, offset.x);
+    let phi = Math.acos(THREE.MathUtils.clamp(offset.z / radius, -1, 1));
+    const damping = this.enableDamping ? this.dampingFactor : 1;
+    theta += this._thetaDelta * damping; phi += this._phiDelta * damping;
+    this._thetaDelta *= (1 - damping); this._phiDelta *= (1 - damping);
+    phi = THREE.MathUtils.clamp(phi, 0.02, this.maxPolarAngle);
+    radius = THREE.MathUtils.clamp(radius * this._radiusScale, this.minDistance, this.maxDistance);
+    this._radiusScale = 1;
+    this.camera.position.set(this.target.x + radius * Math.sin(phi) * Math.cos(theta), this.target.y + radius * Math.sin(phi) * Math.sin(theta), this.target.z + radius * Math.cos(phi));
+    this.camera.up.set(0, 0, 1); this.camera.lookAt(this.target);
+    return true;
+  }
+}
+const OrbitControls = LocalOrbitControls;
 
 const sceneWrap = document.getElementById("sceneWrap");
 const angleSlider = document.getElementById("angleSlider");

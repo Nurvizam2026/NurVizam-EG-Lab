@@ -11,7 +11,12 @@ Interactive Engineering Graphics teaching prototype for solids inclined to HP or
 - Visible fallback drawing labels and an on-screen error message if the 3D module fails to start
 
 ## Run/deploy
-This is a static site. Deploy the folder contents to the root of a GitHub Pages repository. The browser needs internet access to load Three.js from jsDelivr.
+This is a static site. Deploy the folder contents to the root of a GitHub Pages repository. The browser needs internet access to load Three.js. The app tries jsDelivr, unpkg, and esm.sh in sequence. If all are blocked, the 3D model cannot load.
 
 ## Educational limitation
 This is a learning visualization, not a complete engineering drawing solver. Hidden-edge classification is an approximate geometric visibility test and should be checked against the exact textbook construction and projection convention for each solid.
+
+## Camera and loading fixes
+- Uses a local lightweight orbit controller with Z-up coordinates, so OrbitControls is no longer a second external dependency.
+- Tries multiple Three.js CDN sources and reports a more useful error if all fail.
+- Run through GitHub Pages or a local HTTP server; ES modules generally do not work when opening `index.html` directly with `file://`.
