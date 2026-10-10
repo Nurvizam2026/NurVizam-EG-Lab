@@ -25,3 +25,12 @@ Important limitations:
 - Curved solids are faceted approximations; analytic cone/cylinder contact is not yet implemented.
 - Hidden-edge classification remains a face-based visualization approximation.
 - No live browser/WebGL rendering test was completed in this environment. Static syntax and structure checks are not proof of correct rendered geometry. Test the cube diagonal modes and pyramid triangular-face contact in a browser before teaching use.
+
+
+UI flexibility update (2026-10-11)
+- The resting-feature dropdown is no longer forced to Corner when a cube body-diagonal condition is selected. Edge, slant/lateral edge, side face, base face, and corner choices remain independently selectable where the solid supports them.
+- Edge choices are no longer pre-disabled by a predictive feasibility test. The solver's geometric contact validation determines whether the chosen feature can actually support HP/VP and reports incompatible combinations.
+- Side-face selection now supports pyramid triangular side faces and prism/cube rectangular side faces. Prism lateral edges are also available as contact features. The same transformed geometry is used for the resulting projections.
+- Body-diagonal edge/face roll calculations preserve the specified body-diagonal direction.
+- Named mixed conditions still keep their specified hinge plane/feature locked because the base-edge hinge is part of the meaning of those presets. Use the general axis/body-diagonal condition for independent plane/feature selection. Mixed conditions are no longer globally disabled for curved solids; the faceted model is used and actual contact is checked.
+- Static JavaScript syntax validation passed with Node.js. A live browser/WebGL render test was not performed in this environment.
