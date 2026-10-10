@@ -16,7 +16,7 @@ const quizFeedback = document.getElementById("quizFeedback");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#f4f7fb");
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-camera.position.set(8.5, -11.5, 7.5);
+camera.position.set(0, -11.5, 7.0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -29,7 +29,7 @@ sceneWrap.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.target.set(0, -1.3, 1.35);
+controls.target.set(0, 0, 1.25);
 controls.minDistance = 5;
 controls.maxDistance = 18;
 controls.maxPolarAngle = Math.PI * 0.49;
@@ -44,17 +44,17 @@ const grid = new THREE.GridHelper(10, 20, 0xc1ccdc, 0xe0e6ef);
 grid.position.z = 0.005;
 scene.add(grid);
 
-// Coordinate convention: x = horizontal, y = depth, z = height.
-// HP is the horizontal XY plane at z=0; VP is the vertical XZ plane at y=0.
-// Keep both reference planes fixed and perpendicular. The solid sits in front of VP (negative y).
-const hp = makePlane(10, 10, "#d78b9b", 0.20);
+// Coordinate convention: x = horizontal on the sheet, y = depth, z = height.
+// HP is z=0. VP is y=0. The object is rotated about the y axis and then
+// translated vertically so its lowest point stays on HP.
+const hp = makePlane(10, 10, "#168b8b", 0.16);
 hp.rotation.x = 0;
 hp.position.z = -0.015;
 scene.add(hp);
-const vp = makePlane(10, 5.5, "#5b91d8", 0.16);
+const vp = makePlane(10, 5.5, "#e38a3c", 0.11);
 vp.rotation.x = Math.PI / 2;
-vp.position.y = 0;
-vp.position.z = 2.75;
+vp.position.y = -2.6;
+vp.position.z = 2.3;
 scene.add(vp);
 
 // Plane labels are rendered as sprites so they remain legible in the 3D view.
@@ -77,8 +77,8 @@ function makeLabel(text, color, position, scale = 0.9) {
   scene.add(sprite);
   return sprite;
 }
-makeLabel("HP · HORIZONTAL PLANE", "#b65f73", new THREE.Vector3(-2.5, -3.2, 0.14), 0.8);
-makeLabel("VP · VERTICAL PLANE", "#245da8", new THREE.Vector3(2.2, -0.10, 5.2), 0.8);
+makeLabel("VP · VERTICAL PLANE", "#087f8c", new THREE.Vector3(-2.2, -3.0, 0.14), 0.8);
+makeLabel("HP · HORIZONTAL PLANE", "#c96b23", new THREE.Vector3(2.1, -2.72, 4.8), 0.8);
 
 function makePlane(w, h, color, opacity) {
   const geometry = new THREE.PlaneGeometry(w, h);
@@ -110,14 +110,13 @@ function makeGeometry(kind) {
   const n = polygon.length;
   const vertices = [];
   if (mode === "hp") {
-    // Axis initially vertical: perpendicular to HP and parallel to VP.
-    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y - 2.6, 0)));
-    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y - 2.6, height)));
+    // Axis initially perpendicular to HP (z direction), parallel to VP.
+    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, 0)));
+    polygon.forEach(([x, y]) => vertices.push(new THREE.Vector3(x, y, height)));
   } else {
-    // Axis initially along depth: perpendicular to VP and parallel to HP.
-    // Place the entire prism in front of VP, extending from y=-2.6 to y=-2.6-height.
-    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, -2.6, Math.max(0, z + 0.9))));
-    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, -2.6 - height, Math.max(0, z + 0.9))));
+    // Axis initially perpendicular to VP (y direction), parallel to HP.
+    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, 0, Math.max(0, z + 0.9))));
+    polygon.forEach(([x, z]) => vertices.push(new THREE.Vector3(x, height, Math.max(0, z + 0.9))));
   }
   const edgeList = [];
   for (let i = 0; i < n; i++) {
@@ -233,11 +232,8 @@ function rebuildSolid() {
 function rotateAndLift(v, angle) {
   const c = Math.cos(angle), s = Math.sin(angle);
   if (inclinationMode.value === "vp") {
-    // Rotate the axis within HP about its VP-side end (x=0, y=-2.6).
-    // At 0° the axis is perpendicular to VP; increasing angle tilts it while z stays fixed.
-    const pivotY = -2.6;
-    const dy = v.y - pivotY;
-    return new THREE.Vector3(v.x * c + dy * s, pivotY + dy * c, v.z);
+    // Axis lies in HP (z unchanged) and rotates away from VP around z.
+    return new THREE.Vector3(v.x * c - v.y * s, v.x * s + v.y * c, v.z);
   }
   // Axis stays parallel to VP and tilts away from HP by rotation about y.
   const x = v.x * c + v.z * s;
@@ -294,7 +290,7 @@ function updateModel() {
   solidGroup.position.set(0, 0, 0);
   renderProjections(data);
   angleLabel.textContent = `${angleSlider.value}°`;
-  angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
+  angleModeLabel.textContent = inclinationMode.value === "vp" ? "Inclination to HP" : "Inclination to VP";
 }
 
 function clearGroup(group) {
@@ -425,19 +421,19 @@ animate();
 
 angleSlider.addEventListener("input", updateModel);
 inclinationMode.addEventListener("change", () => {
-  angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
+  angleModeLabel.textContent = inclinationMode.value === "vp" ? "Inclination to HP" : "Inclination to VP";
   rebuildSolid();
 });
 solidSelect.addEventListener("change", rebuildSolid);
 guideSelect.addEventListener("change", updateModel);
 document.getElementById("resetBtn").addEventListener("click", () => {
   angleSlider.value = "30";
-  inclinationMode.value = "hp";
+  inclinationMode.value = "vp";
   angleModeLabel.textContent = "Inclination to HP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
-  camera.position.set(8.5, -11.5, 7.5);
-  controls.target.set(0, -1.3, 1.35);
+  camera.position.set(0, -11.5, 7.0);
+  controls.target.set(0, 0, 1.25);
   controls.update();
   hintBox.hidden = true;
   quizFeedback.hidden = true;
