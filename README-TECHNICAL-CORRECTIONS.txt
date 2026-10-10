@@ -27,10 +27,8 @@ Important limitations:
 - No live browser/WebGL rendering test was completed in this environment. Static syntax and structure checks are not proof of correct rendered geometry. Test the cube diagonal modes and pyramid triangular-face contact in a browser before teaching use.
 
 
-UI flexibility update (2026-10-11)
-- The resting-feature dropdown is no longer forced to Corner when a cube body-diagonal condition is selected. Edge, slant/lateral edge, side face, base face, and corner choices remain independently selectable where the solid supports them.
-- Edge choices are no longer pre-disabled by a predictive feasibility test. The solver's geometric contact validation determines whether the chosen feature can actually support HP/VP and reports incompatible combinations.
-- Side-face selection now supports pyramid triangular side faces and prism/cube rectangular side faces. Prism lateral edges are also available as contact features. The same transformed geometry is used for the resulting projections.
-- Body-diagonal edge/face roll calculations preserve the specified body-diagonal direction.
-- Named mixed conditions still keep their specified hinge plane/feature locked because the base-edge hinge is part of the meaning of those presets. Use the general axis/body-diagonal condition for independent plane/feature selection. Mixed conditions are no longer globally disabled for curved solids; the faceted model is used and actual contact is checked.
-- Static JavaScript syntax validation passed with Node.js. A live browser/WebGL render test was not performed in this environment.
+Flexible inclination controls (October 2026 update)
+--------------------------------------------------
+Module 02 now has an independent “Which part is inclined?” selector with Axis, Base edge, Slant edge/Generator, Cube body diagonal, Triangular side face, Other side face, and Base plane options. A dependent selector identifies the specific edge, diagonal, or face where applicable. The two angle inputs are interpreted as line-to-plane angles for line features and plane-to-plane angles for face/base-plane features. Feature options that do not exist on the selected solid are not offered. Contact options are kept selectable where practical; incompatibility is reported by the geometric status rather than disabling every candidate in advance.
+
+Verification: JavaScript syntax was checked with Node.js. The browser/WebGL scene has not been executed in a live browser during this update; test representative solids and contact combinations before deploying to GitHub Pages.

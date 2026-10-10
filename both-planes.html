@@ -94,24 +94,38 @@
             <option value="baseFace">Complete base face</option>
             <option value="corner">Corner (adjacent base edges equally inclined)</option>
             <option value="slant">Slant edge / generator</option>
-            <option value="triangularFace">Side face</option>
+            <option value="triangularFace">Triangular side face</option>
             
           </select>
         </label>
-        <label class="field" id="edgeSelectField"><span>5. Select edge / generator</span>
+        <label class="field" id="edgeSelectField"><span>5. Select resting edge / generator</span>
           <select id="edgeSelect"><option value="0">First available feature</option><option value="1">Second available feature</option><option value="2">Third available feature</option></select>
+        </label>
+        <label class="field"><span>6. Which part is inclined?</span>
+          <select id="inclinedPartSelect">
+            <option value="axis">Axis</option>
+            <option value="baseEdge">Base edge</option>
+            <option value="slantEdge">Slant edge / generator</option>
+            <option value="bodyDiagonal">Body diagonal (cube)</option>
+            <option value="triangularFace">Triangular side face</option>
+            <option value="sideFace">Other side face</option>
+            <option value="basePlane">Base plane</option>
+          </select>
+        </label>
+        <label class="field" id="inclinedFeatureSelectField"><span>7. Select inclined feature</span>
+          <select id="inclinedFeatureSelect"><option value="0">Feature 1</option></select>
         </label>
         <label class="field" id="cornerSelectField" hidden><span>5. Select corner</span>
           <select id="cornerSelect"><option value="0">Base corner 1</option></select>
         </label>
-        <label class="field"><span id="angleALabel">6. Axis inclination to HP (α)</span><span class="range-line"><input id="angleA" type="range" min="0" max="90" step="1" value="30"><output id="angleAValue">30°</output></span></label>
-        <label class="field"><span id="angleBLabel">7. Axis inclination to VP (β)</span><span class="range-line"><input id="angleB" type="range" min="0" max="90" step="1" value="30"><output id="angleBValue">30°</output></span></label>
+        <label class="field"><span id="angleALabel">8. Axis inclination to HP (α)</span><span class="range-line"><input id="angleA" type="range" min="0" max="90" step="1" value="30"><output id="angleAValue">30°</output></span></label>
+        <label class="field"><span id="angleBLabel">9. Axis inclination to VP (β)</span><span class="range-line"><input id="angleB" type="range" min="0" max="90" step="1" value="30"><output id="angleBValue">30°</output></span></label>
         <label class="field" id="apexDirectionField" hidden><span>Apex direction relative to contact plane</span>
           <select id="apexDirection"><option value="away">Apex away from contact plane</option><option value="toward">Apex towards contact plane</option></select>
         </label>
         <div class="field status-field"><span>Geometric check</span><p id="geometryStatus" role="status">Valid angle combination.</p></div>
       </div>
-      <p class="help" id="conditionHelp">Choose the solid, geometric condition, contact plane and resting feature first. Then set the axis inclinations to HP and VP. For corner contact, the two adjacent base edges at the selected corner are constrained to be equally inclined to the resting plane; the axis may have a separate inclination to the other plane.</p>
+      <p class="help" id="conditionHelp">Choose the solid, resting plane, resting part and inclined part independently. Then set the selected inclined feature’s angles to HP and VP. For corner contact, the two adjacent base edges at the selected corner are constrained to be equally inclined to the resting plane; the axis may have a separate inclination to the other plane.</p>
     </section>
 
     <section class="view-grid" aria-label="3D model and orthographic projections">
@@ -119,7 +133,7 @@
       <article class="panel view-panel"><div class="view-heading"><div><h2>Orthographic drawing sheet</h2><p>Views are generated from the same transformed vertices.</p></div><span class="view-tag">2D</span></div><canvas id="drawingSheet" width="900" height="680" aria-label="First-angle front view above XY and top view below XY"></canvas><p class="projection-note"><strong>VP projection — Front View (FV):</strong> on VP. <strong>HP projection — Top View (TV):</strong> on HP. The separate sheet places FV above XY and TV below XY in first-angle layout. In the 3D view, orange lines are FV, green lines are TV, and grey dashed lines are projectors. Hidden edges are dashed using a face-based visibility test; curved solids are polygonal approximations.</p></article>
     </section>
 
-    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>Choose the resting feature before setting angles. For corner contact, a base corner is selected and the two adjacent base edges are constrained to have equal inclinations to the contact plane. The axis can remain inclined to the other plane. An edge is reported as resting only when it is actually parallel to and supporting the selected plane. The resting feature and plane remain selectable for the general axis/body-diagonal conditions. The two mixed conditions retain their specified base-edge hinge because that hinge is part of the selected condition.</li><li>The drawing sheet shows the VP projection (front view) above XY and the HP projection (top view) below XY, generated from the same transformed 3D vertices.</li></ol><p class="small-note">This is an educational visualizer. Cylinders and cones use faceted polygonal geometry; edge visibility is estimated from the polygon faces. Check construction steps and contact conditions against the prescribed engineering-drawing method for the specific problem.</p></section>
+    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>Choose the resting feature before setting angles. For corner contact, a base corner is selected and the two adjacent base edges are constrained to have equal inclinations to the contact plane. The axis can remain inclined to the other plane. An edge is reported as resting only when it is actually parallel to and supporting the selected plane. In the mixed conditions, the base edge is the required hinge and the reference plane is fixed by the construction.</li><li>The drawing sheet shows the VP projection (front view) above XY and the HP projection (top view) below XY, generated from the same transformed 3D vertices.</li></ol><p class="small-note">This is an educational visualizer. Cylinders and cones use faceted polygonal geometry; edge visibility is estimated from the polygon faces. Check construction steps and contact conditions against the prescribed engineering-drawing method for the specific problem.</p></section>
     <footer class="footer"><strong>Nurvizam Engineering Graphics Lab</strong><span>Module 02 · Solids inclined to both HP and VP</span><a href="./index.html">Open Module 01: Single-plane experiment</a><span>Developed by Dr. Mohammed Shafeeque KK · Ph.D., IIT Palakkad</span></footer>
   </main>
   <script type="module" src="./both-planes.js"></script>
