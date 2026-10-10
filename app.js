@@ -425,7 +425,7 @@ function getRestingOptionSpecs() {
   const specs = [{ value: "automatic", label: "Automatic (current behavior)" },
     { value: "base", label: "Base (entire base face)" },
     { value: "baseEdge", label: "Base edge" },
-    { value: "corner", label: kind === "cone" ? "Apex / corner" : "Corner" }];
+    { value: "corner", label: (kind === "cone" || kind.endsWith("Pyramid")) ? "Corner / apex (symmetric only at apex)" : "Corner" }];
   if (kind.endsWith("Pyramid")) specs.push({ value: "slantEdge", label: "Slant edge" });
   if (kind === "cone" || kind === "cylinder") specs.push({ value: "generator", label: "Generator" });
   return specs;
@@ -445,9 +445,33 @@ function computeRestingTransform(type, signedAngle = signedInclinationAngle()) {
   }
   if (type === "corner") {
     let candidates = solidFeatures.corners?.[side] || [];
-    if (isApex && side === "right") candidates = solidFeatures.apex == null ? [] : [solidFeatures.apex];
+    if (isApex && side === "right") {
+      // Symmetric apex-resting condition: orient a regular pyramid/cone so a
+      // pair of adjacent base vertices has equal distance from the reference
+      // plane. Because the corresponding slant edges/generators are equal in
+      // length, those two sides are equally inclined to the plane. The apex
+      // itself must still be the supporting extreme and remains the anchor.
+      const apexId = solidFeatures.apex;
+      const baseRing = solidFeatures.baseFaces?.left || [];
+      if (apexId == null || baseRing.length < 3) return { valid: false };
+      for (let i = 0; i < baseRing.length; i++) {
+        const edge = [baseRing[i], baseRing[(i + 1) % baseRing.length]];
+        for (const roll of edgeRollCandidates(edge, signedAngle)) {
+          const transformed = rawVertices.map(v => rotateForMode(v, signedAngle, roll));
+          const vals = transformed.map(normalCoordinate);
+          const extreme = inclinationMode.value === "hp" ? Math.min(...vals) : Math.max(...vals);
+          const apexCoord = normalCoordinate(transformed[apexId]);
+          const aCoord = normalCoordinate(transformed[edge[0]]);
+          const bCoord = normalCoordinate(transformed[edge[1]]);
+          if (Math.abs(aCoord - bCoord) < 1e-4 && Math.abs(apexCoord - extreme) < 1e-4) {
+            return { valid: true, roll, anchor: { type: "point", ids: [apexId] }, type, symmetricApex: true };
+          }
+        }
+      }
+      return { valid: false };
+    }
     if (!candidates.length) return { valid: false };
-    // Choose the corner that can be made the supporting extreme after roll.
+    // For non-apex corners, retain the existing support-corner behavior.
     let best = null;
     for (const id of candidates) {
       const roll = cornerRoll(id);

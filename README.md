@@ -24,3 +24,9 @@ This is a learning visualization, not a complete engineering drawing solver. Hid
 - Tries multiple Three.js CDN sources and reports a more useful error if all fail.
 - Run through GitHub Pages or a local HTTP server; ES modules generally do not work when opening `index.html` directly with `file://`.
 \n\n## Fix for `Failed to resolve module specifier 'three'`\nThe page includes an import map for `three` and `three/addons/` and cache-busts `app.js`. Upload **all files** in this folder to the repository root (or keep the `nurvizam-eg-lab` folder structure consistently). Do not upload only `index.html`; `index.html` and `app.js` must come from the same ZIP version. Hard-refresh after deployment (Ctrl+F5).\n
+
+## Symmetric corner-resting update
+
+For regular pyramids and cones, when the apex is the selected contact point, the corner condition now searches for a symmetric orientation in which two adjacent base vertices have equal distance from HP or VP. Their corresponding equal-length slant edges/generators are therefore equally inclined to the reference plane. The apex must remain the supporting extreme. If no valid orientation exists at the current angle/direction, that condition is unavailable rather than showing an invalid contact.
+
+The non-apex corner behavior and all other resting conditions are unchanged. The mobile two-panel layout is included.
