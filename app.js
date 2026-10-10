@@ -25,6 +25,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.domElement.setAttribute("aria-label", "Interactive 3D prism. Drag to rotate the camera.");
 sceneWrap.appendChild(renderer.domElement);
 loading.hidden = true;
+loading.remove();
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -56,6 +57,29 @@ vp.rotation.x = Math.PI / 2;
 vp.position.y = 2.6;
 vp.position.z = 2.3;
 scene.add(vp);
+
+// Plane labels are rendered as sprites so they remain legible in the 3D view.
+function makeLabel(text, color, position, scale = 0.9) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = "bold 48px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = color;
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+  sprite.position.copy(position);
+  sprite.scale.set(scale * 2.8, scale * 0.7, 1);
+  sprite.renderOrder = 10;
+  scene.add(sprite);
+  return sprite;
+}
+makeLabel("HP · HORIZONTAL PLANE", "#087f8c", new THREE.Vector3(-2.2, -3.0, 0.14), 0.8);
+makeLabel("VP · VERTICAL PLANE", "#c96b23", new THREE.Vector3(2.1, 2.55, 4.8), 0.8);
 
 function makePlane(w, h, color, opacity) {
   const geometry = new THREE.PlaneGeometry(w, h);
