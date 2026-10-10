@@ -16,7 +16,7 @@ const quizFeedback = document.getElementById("quizFeedback");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#f4f7fb");
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-camera.position.set(0, -11.5, 7.0);
+camera.position.set(0, -12.5, 7.2);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -29,7 +29,7 @@ sceneWrap.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.target.set(0, 0, 1.25);
+controls.target.set(0, -1.1, 1.65);
 controls.minDistance = 5;
 controls.maxDistance = 18;
 controls.maxPolarAngle = Math.PI * 0.49;
@@ -47,13 +47,13 @@ scene.add(grid);
 // Coordinate convention: x = horizontal on the sheet, y = depth, z = height.
 // HP is z=0. VP is y=0. The object is rotated about the y axis and then
 // translated vertically so its lowest point stays on HP.
-const hp = makePlane(10, 10, "#168b8b", 0.16);
+const hp = makePlane(10, 10, "#d99aa8", 0.20);
 hp.rotation.x = 0;
 hp.position.z = -0.015;
 scene.add(hp);
-const vp = makePlane(10, 5.5, "#e38a3c", 0.11);
+const vp = makePlane(10, 5.5, "#78a9e6", 0.18);
 vp.rotation.x = Math.PI / 2;
-vp.position.y = -2.6;
+vp.position.y = 0;
 vp.position.z = 2.3;
 scene.add(vp);
 
@@ -77,8 +77,10 @@ function makeLabel(text, color, position, scale = 0.9) {
   scene.add(sprite);
   return sprite;
 }
-makeLabel("VP · VERTICAL PLANE", "#087f8c", new THREE.Vector3(-2.2, -3.0, 0.14), 0.8);
-makeLabel("HP · HORIZONTAL PLANE", "#c96b23", new THREE.Vector3(2.1, -2.72, 4.8), 0.8);
+makeLabel("HP · HORIZONTAL PLANE", "#a94f66", new THREE.Vector3(2.25, -3.9, 0.12), 0.8);
+makeLabel("VP · VERTICAL PLANE", "#245fa8", new THREE.Vector3(-2.2, 0.05, 4.9), 0.8);
+makeLabel("TV · TOP VIEW", "#a94f66", new THREE.Vector3(1.65, -3.15, 0.18), 0.62);
+makeLabel("FV · FRONT VIEW", "#245fa8", new THREE.Vector3(1.65, -0.04, 3.95), 0.62);
 
 function makePlane(w, h, color, opacity) {
   const geometry = new THREE.PlaneGeometry(w, h);
@@ -246,7 +248,8 @@ function getTransformedVertices() {
   const angle = Number(angleSlider.value) * Math.PI / 180;
   const rotated = rawVertices.map(v => rotateAndLift(v, angle));
   const minZ = Math.min(...rotated.map(v => v.z));
-  return rotated.map(v => new THREE.Vector3(v.x, v.y, v.z - minZ));
+  // Keep the solid above HP (z >= 0) and on the viewer side of VP (y < 0).
+  return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, v.z - minZ + 0.08));
 }
 
 function updateModel() {
@@ -325,11 +328,11 @@ function renderPlaneProjections(vertices) {
     const [a, b] = edge;
     const va = vertices[a], vb = vertices[b];
     const hpSeg = [new THREE.Vector3(va.x, va.y, 0.025), new THREE.Vector3(vb.x, vb.y, 0.025)];
-    const vpSeg = [new THREE.Vector3(va.x, -2.575, va.z), new THREE.Vector3(vb.x, -2.575, vb.z)];
+    const vpSeg = [new THREE.Vector3(va.x, 0.025, va.z), new THREE.Vector3(vb.x, 0.025, vb.z)];
     (edgeIsHidden(edge, vertices, 'top') ? hpHidden : hpVisible).push(hpSeg);
     (edgeIsHidden(edge, vertices, 'front') ? vpHidden : vpVisible).push(vpSeg);
     projectors.push([va, new THREE.Vector3(va.x, va.y, 0.04)]);
-    projectors.push([va, new THREE.Vector3(va.x, -2.575, va.z)]);
+    projectors.push([va, new THREE.Vector3(va.x, 0.04, va.z)]);
   });
   if (guideSelect.value === 'on') addLineSegments(projectionGroup, projectors, '#7c8ca5', 0.62, true);
   addLineSegments(projectionGroup, hpVisible, '#087f8c', 0.98, false);
@@ -432,8 +435,8 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   angleModeLabel.textContent = "Inclination to HP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
-  camera.position.set(0, -11.5, 7.0);
-  controls.target.set(0, 0, 1.25);
+  camera.position.set(0, -12.5, 7.2);
+  controls.target.set(0, -1.1, 1.65);
   controls.update();
   hintBox.hidden = true;
   quizFeedback.hidden = true;
