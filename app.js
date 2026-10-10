@@ -66,6 +66,8 @@ const angleLabel = document.getElementById("angleLabel");
 const inclinationMode = document.getElementById("inclinationMode");
 const angleModeLabel = document.getElementById("angleModeLabel");
 const solidSelect = document.getElementById("solidSelect");
+const apexDirectionField = document.getElementById("apexDirectionField");
+const apexDirection = document.getElementById("apexDirection");
 const guideSelect = document.getElementById("guideSelect");
 const hintBtn = document.getElementById("hintBtn");
 const answerBtn = document.getElementById("answerBtn");
@@ -316,6 +318,13 @@ function edgeIsHidden(edge, vertices, view) {
   return false;
 }
 
+function syncApexDirectionLabels() {
+  if (!apexDirection) return;
+  const plane = inclinationMode.value === "hp" ? "HP" : "VP";
+  apexDirection.options[0].textContent = `Towards ${plane}`;
+  apexDirection.options[1].textContent = `Away from ${plane}`;
+}
+
 function rebuildSolid() {
   while (solidGroup.children.length) {
     const child = solidGroup.children.pop();
@@ -326,6 +335,8 @@ function rebuildSolid() {
   const data = makeGeometry(solidSelect.value);
   rawVertices = data.vertices;
   edges = data.edges;
+  if (apexDirectionField) apexDirectionField.hidden = !(solidSelect.value.endsWith("Pyramid") || solidSelect.value === "cone");
+  syncApexDirectionLabels();
   faceTriangles = data.triangles;
   const positions = [];
   faceTriangles.forEach(tri => tri.forEach(index => {
@@ -356,7 +367,10 @@ function rebuildSolid() {
 }
 
 function rotateAndLift(v, angle) {
-  const c = Math.cos(angle), s = Math.sin(angle);
+  // Positive rotation points the +X apex/axis towards the selected reference
+  // plane in both inclination modes. The control reverses that orientation.
+  const signedAngle = apexDirection?.value === "away" ? -angle : angle;
+  const c = Math.cos(signedAngle), s = Math.sin(signedAngle);
   if (inclinationMode.value === "vp") {
     // Mode B: inclined to VP, parallel to HP.
     // Rotate the longitudinal X-axis about Z: its Z component remains zero,
@@ -377,8 +391,18 @@ function getTransformedVertices() {
   const angle = Number(angleSlider.value) * Math.PI / 180;
   const rotated = rawVertices.map(v => rotateAndLift(v, angle));
   const minZ = Math.min(...rotated.map(v => v.z));
-  // Keep the solid above HP (z >= 0) and on the viewer side of VP (y < 0).
-  return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, Math.max(0.08, v.z - minZ + 0.08)));
+  const maxY = Math.max(...rotated.map(v => v.y));
+
+  // Keep the same transformed coordinates for the 3D model and both 2D views.
+  // In HP-inclination mode, the lowest point/edge is on HP (z=0), so its FV
+  // correctly meets XY. In VP-inclination mode, the nearest point/edge is on
+  // VP (y=0), so its TV correctly meets XY. The other mode's solid is offset
+  // from the reference plane rather than artificially pinned to both planes.
+  if (inclinationMode.value === "hp") {
+    return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, Math.max(0, v.z - minZ)));
+  }
+  const verticalClearance = 0.8;
+  return rotated.map(v => new THREE.Vector3(v.x, v.y - maxY, v.z - minZ + verticalClearance));
 }
 
 function updateModel() {
@@ -469,17 +493,22 @@ function renderDrawingSheet(vertices) {
   const top = vertices.map(v => [v.x, v.y]);
   const allX = [...front, ...top].map(p => p[0]);
   const minX = Math.min(...allX), maxX = Math.max(...allX);
-  const minH = Math.min(...front.map(p => p[1]));
   const maxH = Math.max(...front.map(p => p[1]));
-  const minD = Math.min(...top.map(p => p[1]));
-  const maxD = Math.max(...top.map(p => p[1]));
+  const maxDepth = Math.max(0, ...top.map(p => -p[1]));
 
-  // One common scale preserves relative dimensions between front and top views.
-  const scale = Math.min(230 / Math.max(maxX - minX, 0.1), 145 / Math.max(maxH - minH, 0.1), 105 / Math.max(maxD - minD, 0.1));
+  // One common scale preserves dimensions. Crucially, the sheet uses world
+  // coordinates relative to XY: z=0 maps onto XY in FV and y=0 maps onto XY
+  // in TV. Do not independently subtract each view's minimum, which made a
+  // solid resting on HP/VP appear to float away from XY.
+  const scale = Math.min(
+    230 / Math.max(maxX - minX, 0.1),
+    185 / Math.max(maxH, 0.1),
+    185 / Math.max(maxDepth, 0.1)
+  );
   const cx = 350 - ((minX + maxX) / 2) * scale;
   const xyY = 250;
-  const mapFront = p => [cx + p[0] * scale, xyY - (p[1] - minH) * scale - 24];
-  const mapTop = p => [cx + p[0] * scale, xyY + 24 + (p[1] - minD) * scale];
+  const mapFront = p => [cx + p[0] * scale, xyY - p[1] * scale];
+  const mapTop = p => [cx + p[0] * scale, xyY - p[1] * scale];
 
   const frontPts = front.map(mapFront);
   const topPts = top.map(mapTop);
@@ -545,13 +574,16 @@ animate();
 angleSlider.addEventListener("input", updateModel);
 inclinationMode.addEventListener("change", () => {
   angleModeLabel.textContent = inclinationMode.value === "hp" ? "Inclination to HP" : "Inclination to VP";
-  rebuildSolid();
+  syncApexDirectionLabels();
+  updateModel();
 });
 solidSelect.addEventListener("change", rebuildSolid);
+apexDirection?.addEventListener("change", updateModel);
 guideSelect.addEventListener("change", updateModel);
 document.getElementById("resetBtn").addEventListener("click", () => {
   angleSlider.value = "30";
   inclinationMode.value = "vp";
+  if (apexDirection) apexDirection.value = "towards";
   angleModeLabel.textContent = "Inclination to VP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
