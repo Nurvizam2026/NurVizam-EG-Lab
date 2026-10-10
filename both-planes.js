@@ -5,20 +5,35 @@ async function loadThree(){
   throw new Error("Three.js could not load. Check internet access to a Three.js CDN. "+(last?.message||""));
 }
 const $=id=>document.getElementById(id);
-const solidSelect=$("solidSelect"),conditionSelect=$("conditionSelect"),angleA=$("angleA"),angleB=$("angleB"),angleAValue=$("angleAValue"),angleBValue=$("angleBValue"),angleALabel=$("angleALabel"),angleBLabel=$("angleBLabel"),edgeSelect=$("edgeSelect"),edgeSelectField=$("edgeSelectField"),restingCondition=$("restingCondition"),restingPlane=$("restingPlane"),geometryStatus=$("geometryStatus"),conditionHelp=$("conditionHelp"),sceneWrap=$("sceneWrap"),sheet=$("drawingSheet"),ctx=sheet.getContext("2d");
+const solidSelect=$("solidSelect"),conditionSelect=$("conditionSelect"),angleA=$("angleA"),angleB=$("angleB"),angleAValue=$("angleAValue"),angleBValue=$("angleBValue"),angleALabel=$("angleALabel"),angleBLabel=$("angleBLabel"),edgeSelect=$("edgeSelect"),edgeSelectField=$("edgeSelectField"),restingCondition=$("restingCondition"),restingPlane=$("restingPlane"),apexDirectionField=$("apexDirectionField"),apexDirection=$("apexDirection"),geometryStatus=$("geometryStatus"),conditionHelp=$("conditionHelp"),sceneWrap=$("sceneWrap"),sheet=$("drawingSheet"),ctx=sheet.getContext("2d");
 const scene=new THREE.Scene();scene.background=new THREE.Color("#f4f7fb");
 const camera=new THREE.PerspectiveCamera(38,1,.1,100);camera.up.set(0,0,1);camera.position.set(7.5,-10,7.5);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.domElement.setAttribute("aria-label","Interactive 3D solid. Drag to rotate the camera and scroll to zoom.");sceneWrap.replaceChildren(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xffffff,0xb9c7d9,2));const light=new THREE.DirectionalLight(0xffffff,2.2);light.position.set(5,-5,8);scene.add(light);
 const hp=new THREE.Mesh(new THREE.PlaneGeometry(9,9),new THREE.MeshBasicMaterial({color:0xd99aa8,transparent:true,opacity:.22,side:THREE.DoubleSide,depthWrite:false}));hp.position.z=0;scene.add(hp);
 const vp=new THREE.Mesh(new THREE.PlaneGeometry(9,6),new THREE.MeshBasicMaterial({color:0x78a9e6,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));vp.rotation.x=Math.PI/2;vp.position.y=0;vp.position.z=2.5;scene.add(vp);
-const grid=new THREE.GridHelper(9,18,0xc1ccdc,0xe0e6ef);grid.rotation.x=Math.PI/2;grid.position.z=.01;scene.add(grid);
+const grid=new THREE.GridHelper(9,18,0xc1ccdc,0xe0e6ef);grid.rotation.x=Math.PI/2;grid.position.z=-.02;scene.add(grid);
 let drag=null,theta=-.93,phi=.86,radius=12;
 renderer.domElement.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture?.(e.pointerId)});
 renderer.domElement.addEventListener("pointermove",e=>{if(!drag)return;theta-=(e.clientX-drag.x)*.008;phi=Math.max(.08,Math.min(1.48,phi+(e.clientY-drag.y)*.008));drag={x:e.clientX,y:e.clientY};updateCamera()});
 renderer.domElement.addEventListener("pointerup",()=>drag=null);renderer.domElement.addEventListener("pointercancel",()=>drag=null);renderer.domElement.addEventListener("wheel",e=>{e.preventDefault();radius=Math.max(6,Math.min(20,radius*Math.exp(e.deltaY*.001)));updateCamera()},{passive:false});
 function updateCamera(){camera.position.set(radius*Math.sin(phi)*Math.cos(theta),radius*Math.sin(phi)*Math.sin(theta),radius*Math.cos(phi));camera.lookAt(0,-.3,1.2)}updateCamera();
-let solidGroup=new THREE.Group();scene.add(solidGroup);let rawVertices=[],edges=[],faceIndices=[],currentVertices=[];
+let solidGroup=new THREE.Group();scene.add(solidGroup);
+// Projection geometry is kept separate from the solid so updates never overwrite it.
+const projectionGroup=new THREE.Group();scene.add(projectionGroup);
+let rawVertices=[],edges=[],faceIndices=[],currentVertices=[];
+function clearGroup(group){while(group.children.length){const child=group.children.pop();child.geometry?.dispose();if(Array.isArray(child.material))child.material.forEach(m=>m.dispose());else child.material?.dispose();}}
+function addSceneLabel(text,color,position){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const c=canvas.getContext('2d');
+ c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='rgba(255,255,255,.9)';c.strokeStyle=color;c.lineWidth=5;
+ c.beginPath();c.roundRect(8,8,496,112,24);c.fill();c.stroke();c.fillStyle=color;c.font='bold 54px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(text,256,66);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));sprite.position.set(...position);sprite.scale.set(1.55,.39,1);scene.add(sprite);
+}
+addSceneLabel('HP — TOP VIEW (TV)','#9f4355',[3.25,-3.35,.08]);
+addSceneLabel('VP — FRONT VIEW (FV)','#245fa8',[3.25,-.02,5.05]);
+const xyGeometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-4.5,0,0),new THREE.Vector3(4.5,0,0)]);
+scene.add(new THREE.Line(xyGeometry,new THREE.LineBasicMaterial({color:0x34445a})));
 const kindInfo={triangular:{n:3,type:"prism"},square:{n:4,type:"prism"},pentagonal:{n:5,type:"prism"},hexagonal:{n:6,type:"prism"},triangularPyramid:{n:3,type:"pyramid"},squarePyramid:{n:4,type:"pyramid"},pentagonalPyramid:{n:5,type:"pyramid"},hexagonalPyramid:{n:6,type:"pyramid"},cylinder:{n:24,type:"cylinder"},cone:{n:24,type:"cone"}};
 function makeSolid(kind){const {n,type}=kindInfo[kind],v=[],e=[],faces=[],slantEdges=[];const len=2.8,r=1.05;
  const ring=x=>{const ids=[];for(let i=0;i<n;i++){const a=2*Math.PI*i/n+Math.PI/2;ids.push(v.length);v.push(new THREE.Vector3(x,r*Math.cos(a),r*Math.sin(a)))}return ids};
@@ -31,26 +46,47 @@ function makeSolid(kind){const {n,type}=kindInfo[kind],v=[],e=[],faces=[],slantE
    const apex=v.length;v.push(new THREE.Vector3(len/2,0,0));for(let i=0;i<n;i++){e.push([a[i],apex]);slantEdges.push([a[i],apex]);faces.push([a[i],a[(i+1)%n],apex])}for(let i=1;i<n-1;i++)faces.push([a[0],a[i+1],a[i]])
  }
  if(type==="cylinder")for(let i=0;i<n;i++)slantEdges.push([a[i],b[i]]);
- return {vertices:v,edges:e,faces,baseEdges:a.map((id,i)=>[id,a[(i+1)%n]]),slantEdges,type};
+ return {vertices:v,edges:e,faces,baseRing:a,baseEdges:a.map((id,i)=>[id,a[(i+1)%n]]),slantEdges,type};
+}
+function syncApexDirectionControl(){
+ const apexSolid=solidSelect.value.endsWith("Pyramid")||solidSelect.value==="cone";
+ const mixed=conditionSelect.value!=="axisBoth";
+ apexDirectionField.hidden=!apexSolid||mixed;
+ apexDirection.disabled=!apexSolid||mixed;
+ if(mixed)apexDirection.value="away";
+ const label=apexDirectionField.querySelector("span");
+ if(label)label.textContent=`Apex direction relative to ${restingPlane.value}`;
 }
 function setSolid(kind){while(solidGroup.children.length){const o=solidGroup.children.pop();o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose()}const g=makeSolid(kind);rawVertices=g.vertices;edges=g.edges;faceIndices=g.faces;window.__solidType=g.type;const pos=[];for(const f of g.faces)for(const id of f)pos.push(g.vertices[id].x,g.vertices[id].y,g.vertices[id].z);const geom=new THREE.BufferGeometry();geom.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geom.computeVertexNormals();solidGroup.add(new THREE.Mesh(geom,new THREE.MeshStandardMaterial({color:0x7ca7df,roughness:.7,metalness:.02,side:THREE.DoubleSide,flatShading:true,transparent:true,opacity:.92})));
- const ep=[];for(const [i,j] of g.edges){const p=g.vertices[i],q=g.vertices[j];ep.push(p.x,p.y,p.z,q.x,q.y,q.z)}const eg=new THREE.BufferGeometry();eg.setAttribute("position",new THREE.Float32BufferAttribute(ep,3));solidGroup.add(new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:0x163b67,linewidth:1.5})));window.__baseEdges=g.baseEdges;window.__slantEdges=g.slantEdges;refreshEdgeOptions();updateModel();}
+ const ep=[];for(const [i,j] of g.edges){const p=g.vertices[i],q=g.vertices[j];ep.push(p.x,p.y,p.z,q.x,q.y,q.z)}const eg=new THREE.BufferGeometry();eg.setAttribute("position",new THREE.Float32BufferAttribute(ep,3));solidGroup.add(new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:0x163b67,linewidth:1.5})));window.__baseEdges=g.baseEdges;window.__baseRing=g.baseRing;window.__slantEdges=g.slantEdges;syncApexDirectionControl();refreshEdgeOptions();updateModel();}
 function alignXTo(direction){return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),direction.clone().normalize())}
-function transformed(){
- const a=Number(angleA.value)*Math.PI/180,b=Number(angleB.value)*Math.PI/180,condition=conditionSelect.value,plane=restingPlane.value,rest=restingCondition.value;
- let axis;
+function axisDirectionFromControls(){
+ const a=Number(angleA.value)*Math.PI/180,b=Number(angleB.value)*Math.PI/180;
+ const condition=conditionSelect.value,plane=restingPlane.value;
  if(condition==="axisBoth"){
    const sx=Math.sin(a),sy=Math.sin(b),remaining=1-sx*sx-sy*sy;
-   axis=new THREE.Vector3(Math.sqrt(Math.max(0,remaining)),-sy,sx).normalize();
- }else if(condition==="axisHPedgeVP"){
-   // The selected base edge lies in HP and is inclined to VP by angle beta.
-   axis=new THREE.Vector3(Math.cos(a)*Math.sin(b),-Math.cos(a)*Math.cos(b),Math.sin(a)).normalize();
- }else{
-   // The selected base edge lies in VP and is inclined to HP by angle beta.
-   axis=new THREE.Vector3(-Math.cos(a)*Math.sin(b),-Math.sin(a),Math.cos(a)*Math.cos(b)).normalize();
+   const apexSolid=solidSelect.value.endsWith("Pyramid")||solidSelect.value==="cone";
+   const toward=apexSolid&&apexDirection.value==="toward";
+   const ySign=plane==="VP"&&toward?1:-1;
+   const zSign=plane==="HP"&&toward?-1:1;
+   return new THREE.Vector3(Math.sqrt(Math.max(0,remaining)),ySign*sy,zSign*sx).normalize();
  }
+ if(condition==="axisHPedgeVP"){
+   // Axis is alpha above HP; the hinge edge is beta above VP and lies on HP.
+   return new THREE.Vector3(Math.cos(a)*Math.sin(b),-Math.cos(a)*Math.cos(b),Math.sin(a)).normalize();
+ }
+ // Axis is alpha from VP; the hinge edge is beta from HP and lies on VP.
+ return new THREE.Vector3(-Math.cos(a)*Math.sin(b),-Math.sin(a),Math.cos(a)*Math.cos(b)).normalize();
+}
+function transformed(){
+ const a=Number(angleA.value)*Math.PI/180,b=Number(angleB.value)*Math.PI/180,condition=conditionSelect.value,plane=restingPlane.value,rest=restingCondition.value;
+ const axis=axisDirectionFromControls();
  let q=alignXTo(axis),pair=null,featureType=rest;
  const isCurved=["cylinder","cone"].includes(solidSelect.value);
+ const baseFaceValid=condition==="axisBoth" && apexDirection.value!=="toward" && ((plane==="HP" && Math.abs(Number(angleA.value)-90)<.51 && Math.abs(Number(angleB.value))<.51) || (plane==="VP" && Math.abs(Number(angleA.value))<.51 && Math.abs(Number(angleB.value)-90)<.51));
+ if(rest==="baseFace"){
+   window.__restingInvalid=!baseFaceValid;window.__restingError=baseFaceValid?0:90;window.__contactPair=null;window.__contactVertex=null;window.__restingPlaneUsed=plane;
+ }
  if(condition!=="axisBoth"||rest==="base") pair=window.__baseEdges?.[Number(edgeSelect.value)]||window.__baseEdges?.[0];
  if(condition==="axisBoth"&&rest==="slant") pair=window.__slantEdges?.[Number(edgeSelect.value)%Math.max(1,window.__slantEdges?.length||1)]||window.__slantEdges?.[0];
  // In the two mixed conditions, the base edge is the construction hinge and
@@ -58,17 +94,34 @@ function transformed(){
  let targetPlane=plane;
  if(condition==="axisHPedgeVP")targetPlane="HP";
  if(condition==="axisVPedgeHP")targetPlane="VP";
+ window.__restingPlaneUsed=targetPlane;
  if(pair){
    const edgeVector=rawVertices[pair[1]].clone().sub(rawVertices[pair[0]]);
-   const result=rollForEdge(q,edgeVector,0,targetPlane,pair);
-   q=result.q;window.__restingError=result.error;window.__restingPlaneUsed=targetPlane;window.__contactPair=pair;window.__contactVertex=null;
+   const result=condition==="axisBoth"?rollForEdge(q,edgeVector,0,targetPlane,pair):rollForMixedEdge(q,edgeVector,targetPlane,b,pair);
+   if(result){
+     q=result.q;window.__restingError=0;window.__restingInvalid=false;
+     window.__restingPlaneUsed=targetPlane;window.__contactPair=pair;window.__contactVertex=null;
+   }else{
+     // Never fake a contact by translating an edge whose endpoints are not coplanar
+     // with the selected reference plane or which is not a supporting edge.
+     window.__restingError=90;window.__restingInvalid=true;window.__contactPair=null;window.__contactVertex=null;pair=null;
+     if(condition!=="axisBoth"){window.__restingPlaneUsed=targetPlane;}
+   }
  }else if(rest==="corner"){
-   window.__contactPair=null;window.__contactVertex=null;window.__restingError=0;window.__restingPlaneUsed=plane;
- }else{
-   window.__contactPair=null;window.__contactVertex=null;window.__restingError=0;window.__restingPlaneUsed=plane;
+   window.__contactPair=null;window.__contactVertex=null;window.__restingError=0;window.__restingInvalid=false;window.__restingPlaneUsed=plane;
+ }else if(rest!=="baseFace"){
+   window.__contactPair=null;window.__contactVertex=null;window.__restingError=0;window.__restingInvalid=false;window.__restingPlaneUsed=plane;
  }
  let pts=rawVertices.map(v=>v.clone().applyQuaternion(q));
- if(pair){
+ if(rest==="baseFace" && baseFaceValid){
+   const ring=window.__baseRing||[];const coords=ring.map(i=>plane==="HP"?pts[i].z:pts[i].y);const level=coords.reduce((a,b)=>a+b,0)/Math.max(1,coords.length);
+   if(plane==="HP"){
+     pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-level));const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z));
+   }else{
+     pts=pts.map(p=>new THREE.Vector3(p.x,p.y-level,p.z));const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+.12));
+   }
+   window.__contactPair=null;window.__contactVertex=null;
+ }else if(pair){
    const mid=pts[pair[0]].clone().add(pts[pair[1]]).multiplyScalar(.5);
    if(targetPlane==="HP"){
      pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-mid.z));
@@ -90,72 +143,227 @@ function transformed(){
    else {const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY,p.z));const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+.12));}
  }
  // Keep ordinary non-contact configurations in the first quadrant.
- if(rest!=="corner"&&!pair){const minZ=Math.min(...pts.map(p=>p.z)),maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z-minZ+.12));}
+ if(rest!=="corner"&&rest!=="baseFace"&&!pair){const minZ=Math.min(...pts.map(p=>p.z)),maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z-minZ+.12));}
  return pts;
 }
 function rollForEdge(qAlign,edgeVector,targetDeg,plane,featurePair){
- const axis=new THREE.Vector3(1,0,0).applyQuaternion(qAlign).normalize();let best={roll:0,error:Infinity,score:Infinity,q:qAlign};
- for(let i=0;i<=720;i++){
-   const roll=2*Math.PI*i/720,qRoll=new THREE.Quaternion().setFromAxisAngle(axis,roll),q=qRoll.clone().multiply(qAlign);
-   const ev=edgeVector.clone().applyQuaternion(q).normalize();const component=plane==="VP"?Math.abs(ev.y):Math.abs(ev.z);const angle=Math.asin(Math.min(1,component))*180/Math.PI;const error=Math.abs(angle-targetDeg);
-   const pts=rawVertices.map(v=>v.clone().applyQuaternion(q));const pair=featurePair||[0,0],mid=pts[pair[0]].clone().add(pts[pair[1]]).multiplyScalar(.5);let wrong=0;
-   for(const p of pts){const d=plane==="HP"?p.z-mid.z:p.y-mid.y;if(plane==="HP"?d<-.0005:d>.0005)wrong++;}
-   const score=error*100+wrong*0.002;
-   if(score<best.score)best={roll,error,score,q};
+ // Solve the roll about the solid axis exactly, then accept only a true supporting
+ // contact: both edge endpoints lie on the plane and the entire solid stays on
+ // its permitted side of that plane.
+ const axis=new THREE.Vector3(1,0,0).applyQuaternion(qAlign).normalize();
+ const n=plane==="VP"?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1);
+ const e0=edgeVector.clone().applyQuaternion(qAlign).normalize();
+ const parallel=axis.clone().multiplyScalar(e0.dot(axis));
+ const perp=e0.clone().sub(parallel);
+ const A=n.dot(parallel),B=n.dot(perp),C=n.dot(new THREE.Vector3().crossVectors(axis,perp));
+ const R=Math.hypot(B,C);let rolls=[];
+ if(R<1e-10){
+   if(Math.abs(A)>1e-8)return null;
+   // Degenerate but important cases: a base edge lies in a base face perpendicular
+   // to the axis, or a generator is parallel to the axis. Choose the roll that
+   // makes the selected feature a support when the plane normal has a radial part.
+   const radialNormal=n.clone().addScaledVector(axis,-n.dot(axis));
+   if(radialNormal.length()<1e-8)rolls=[0];
+   else{
+     const i=featurePair[0],v0=rawVertices[i].clone().applyQuaternion(qAlign);
+     const radial=v0.clone().addScaledVector(axis,-v0.dot(axis));
+     if(radial.length()<1e-8)return null;
+     const target=radialNormal.normalize().multiplyScalar(plane==="HP"?-1:1);
+     rolls=[Math.atan2(axis.dot(new THREE.Vector3().crossVectors(radial,target)),radial.dot(target))];
+   }
+ }else{
+   if(Math.abs(A)>R+1e-8)return null;
+   const delta=Math.atan2(C,B),gamma=Math.acos(Math.max(-1,Math.min(1,-A/R)));
+   rolls=[delta+gamma,delta-gamma];
+ }
+ let best=null;
+ for(const roll of rolls){
+   const qRoll=new THREE.Quaternion().setFromAxisAngle(axis,roll),q=qRoll.clone().multiply(qAlign);
+   const pts=rawVertices.map(v=>v.clone().applyQuaternion(q));const [i,j]=featurePair;
+   const ci=plane==="HP"?pts[i].z:pts[i].y,cj=plane==="HP"?pts[j].z:pts[j].y;
+   if(Math.abs(ci-cj)>1e-6)continue;
+   const coords=pts.map(p=>plane==="HP"?p.z:p.y);
+   const support=plane==="HP"?Math.min(...coords):Math.max(...coords);
+   if(Math.abs(ci-support)>1e-5)continue;
+   if(coords.some(v=>plane==="HP"?v<support-1e-5:v>support+1e-5))continue;
+   const projectedAngle=Math.asin(Math.min(1,Math.abs(n.dot(edgeVector.clone().applyQuaternion(q).normalize()))))*180/Math.PI;
+   const error=Math.abs(projectedAngle-targetDeg);
+   if(!best||error<best.error)best={roll,error,q};
  }
  return best;
 }
-function updateModel(){currentVertices=transformed();solidGroup.position.set(0,0,0);const pos=[];for(const f of faceIndices)for(const id of f){const p=currentVertices[id];pos.push(p.x,p.y,p.z)}const mesh=solidGroup.children[0];mesh.geometry.dispose();mesh.geometry=new THREE.BufferGeometry();mesh.geometry.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));mesh.geometry.computeVertexNormals();const ep=[];for(const [i,j] of edges){const p=currentVertices[i],q=currentVertices[j];ep.push(p.x,p.y,p.z,q.x,q.y,q.z)}const line=solidGroup.children[1];line.geometry.dispose();line.geometry=new THREE.BufferGeometry();line.geometry.setAttribute("position",new THREE.Float32BufferAttribute(ep,3));line.geometry.computeBoundingSphere();drawSheet();updateLabelsAndStatus();}
+function rollForMixedEdge(qAlign,edgeVector,plane,beta,featurePair){
+ // In the mixed construction the edge must satisfy TWO conditions: lie in the
+ // specified plane and retain its prescribed angle beta to the other plane.
+ // This direct target-direction solve also handles the singular 90-degree case.
+ const axis=new THREE.Vector3(1,0,0).applyQuaternion(qAlign).normalize();
+ let target=plane==="HP"
+   ?new THREE.Vector3(Math.cos(beta),Math.sin(beta),0)
+   :new THREE.Vector3(Math.cos(beta),0,Math.sin(beta));
+ target.addScaledVector(axis,-target.dot(axis)).normalize();
+ const e0=edgeVector.clone().applyQuaternion(qAlign).normalize();
+ const radial=e0.clone().addScaledVector(axis,-e0.dot(axis));
+ if(radial.length()<1e-9||target.length()<1e-9)return null;
+ const [i,j]=featurePair;let best=null;
+ for(const wanted of [target,target.clone().negate()]){
+   const angle=Math.atan2(axis.dot(new THREE.Vector3().crossVectors(radial,wanted)),radial.dot(wanted));
+   const qRoll=new THREE.Quaternion().setFromAxisAngle(axis,angle),q=qRoll.clone().multiply(qAlign);
+   const pts=rawVertices.map(v=>v.clone().applyQuaternion(q));
+   const ci=plane==="HP"?pts[i].z:pts[i].y,cj=plane==="HP"?pts[j].z:pts[j].y;
+   if(Math.abs(ci-cj)>1e-5)continue;
+   const coords=pts.map(p=>plane==="HP"?p.z:p.y),support=plane==="HP"?Math.min(...coords):Math.max(...coords);
+   if(Math.abs(ci-support)>1e-4)continue;
+   if(coords.some(v=>plane==="HP"?v<support-1e-4:v>support+1e-4))continue;
+   const actual=edgeVector.clone().applyQuaternion(q).normalize();
+   const normal=plane==="HP"?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1);
+   const edgeAngle=Math.asin(Math.min(1,Math.abs(normal.dot(actual))))*180/Math.PI;
+   const error=Math.abs(edgeAngle-beta*180/Math.PI);
+   if(!best||error<best.error)best={q,error};
+ }
+ return best;
+}
+
+function projectionVisibility(){
+ const center=new THREE.Vector3();for(const p of currentVertices)center.add(p);center.divideScalar(Math.max(1,currentVertices.length));
+ const faceVis=faceIndices.map(face=>{
+   const a=currentVertices[face[0]],b=currentVertices[face[1]],c=currentVertices[face[2]];
+   const normal=new THREE.Vector3().crossVectors(b.clone().sub(a),c.clone().sub(a)).normalize();
+   const fc=a.clone().add(b).add(c).multiplyScalar(1/3);
+   if(normal.dot(fc.clone().sub(center))<0)normal.negate();
+   return {fv:normal.y< -1e-7,tv:normal.z>1e-7};
+ });
+ const result={FV:[],TV:[]};
+ for(const [i,j] of edges){
+   const adjacent=[];
+   faceIndices.forEach((f,k)=>{if(f.includes(i)&&f.includes(j))adjacent.push(faceVis[k]);});
+   const visibleFV=adjacent.some(f=>f.fv),visibleTV=adjacent.some(f=>f.tv);
+   result.FV.push(visibleFV||adjacent.length===0);result.TV.push(visibleTV||adjacent.length===0);
+ }
+ return result;
+}
+function update3DProjections(){
+ clearGroup(projectionGroup);
+ if(!currentVertices.length)return;
+ const fvVisible=[],fvHidden=[],tvVisible=[],tvHidden=[],projectors=[];
+ const visibility=projectionVisibility();
+ for(let k=0;k<edges.length;k++){
+   const [i,j]=edges[k],a=currentVertices[i],b=currentVertices[j];
+   const fv=visibility.FV[k]?fvVisible:fvHidden,tv=visibility.TV[k]?tvVisible:tvHidden;
+   fv.push(a.x,0,a.z,b.x,0,b.z);
+   tv.push(a.x,a.y,0,b.x,b.y,0);
+ }
+ for(const p of currentVertices){
+   projectors.push(p.x,p.y,p.z,p.x,0,p.z); // perpendicular to VP
+   projectors.push(p.x,p.y,p.z,p.x,p.y,0); // perpendicular to HP
+ }
+ function addLines(coords,color,opacity=1,dashed=false){
+   if(!coords.length)return;
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));
+   const m=dashed?new THREE.LineDashedMaterial({color,dashSize:.12,gapSize:.08,transparent:true,opacity}):new THREE.LineBasicMaterial({color,transparent:opacity<1,opacity});
+   const line=new THREE.LineSegments(g,m);if(dashed)line.computeLineDistances();projectionGroup.add(line);
+ }
+ addLines(projectors,0x8795a8,.72,true);
+ addLines(fvHidden,0x9b5b21,.9,true);addLines(tvHidden,0x14684e,.9,true);
+ addLines(fvVisible,0xd97706,1,false);addLines(tvVisible,0x16805d,1,false);
+ const fvPoints=[],tvPoints=[];
+ for(const p of currentVertices){fvPoints.push(p.x,0,p.z);tvPoints.push(p.x,p.y,0);}
+ function addPoints(coords,color){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));projectionGroup.add(new THREE.Points(g,new THREE.PointsMaterial({color,size:.075,sizeAttenuation:true,depthTest:false})));}
+ addPoints(fvPoints,0xd97706);addPoints(tvPoints,0x16805d);
+}
+function updateModel(){currentVertices=transformed();solidGroup.position.set(0,0,0);const pos=[];for(const f of faceIndices)for(const id of f){const p=currentVertices[id];pos.push(p.x,p.y,p.z)}const mesh=solidGroup.children[0];mesh.geometry.dispose();mesh.geometry=new THREE.BufferGeometry();mesh.geometry.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));mesh.geometry.computeVertexNormals();const ep=[];for(const [i,j] of edges){const p=currentVertices[i],q=currentVertices[j];ep.push(p.x,p.y,p.z,q.x,q.y,q.z)}const line=solidGroup.children[1];line.geometry.dispose();line.geometry=new THREE.BufferGeometry();line.geometry.setAttribute("position",new THREE.Float32BufferAttribute(ep,3));line.geometry.computeBoundingSphere();update3DProjections();drawSheet();updateLabelsAndStatus();}
 function updateLabelsAndStatus(){
  angleAValue.value=angleA.value+"°";angleBValue.value=angleB.value+"°";angleAValue.textContent=angleA.value+"°";angleBValue.textContent=angleB.value+"°";
  const c=conditionSelect.value,rest=restingCondition.value,plane=window.__restingPlaneUsed||restingPlane.value,curved=["cylinder","cone"].includes(solidSelect.value);
- edgeSelectField.hidden=c==="axisBoth"&&rest==="corner";
+ edgeSelectField.hidden=c==="axisBoth"&&(rest==="corner"||rest==="baseFace");
  angleALabel.textContent=c==="axisVPedgeHP"?"Axis inclination to VP (α)":"Axis inclination to HP (α)";
  angleBLabel.textContent=c==="axisHPedgeVP"?"Base-edge inclination to VP (β)":c==="axisVPedgeHP"?"Base-edge inclination to HP (β)":"Axis inclination to VP (β)";
  const sum=Math.sin(Number(angleA.value)*Math.PI/180)**2+Math.sin(Number(angleB.value)*Math.PI/180)**2;
  const axisInvalid=c==="axisBoth"&&sum>1+1e-8;
  const contactError=Number(window.__restingError||0);
  if(axisInvalid){geometryStatus.textContent="Incompatible axis angles: reduce one angle.";geometryStatus.classList.add("invalid");}
- else if(rest!=="corner"&&contactError>0.8){geometryStatus.textContent=`Selected ${rest==="base"?"base edge":"slant edge / generator"} cannot lie exactly on ${plane} at this angle combination (residual ${contactError.toFixed(1)}°).`;geometryStatus.classList.add("invalid");}
- else {geometryStatus.textContent=rest==="corner"?`Corner contact on ${plane}; support vertex is on the plane.`:`${rest==="base"?"Base-edge hinge":"Slant edge / generator"} aligned with ${plane}.`;geometryStatus.classList.remove("invalid");}
- if(c==="axisBoth")conditionHelp.textContent="For an axis inclined by α to HP and β to VP, sin²α + sin²β must not exceed 1. Choose a contact feature and reference plane; the sheet shows the corresponding VP and HP projections.";
+ else if(rest!=="corner"&&window.__restingInvalid){
+   const hasApex=solidSelect.value.endsWith("Pyramid")||solidSelect.value==="cone";
+   geometryStatus.textContent=rest==="baseFace"?`A complete base face can rest on ${plane} only when its axis is perpendicular to that plane and the apex points away from the contact plane. Adjust the angles/direction.`:`The selected ${rest==="base"?"base edge":"slant edge / generator"} cannot rest on ${plane} at this angle combination. Change an angle, edge, contact plane${hasApex?" or apex direction":""}.`;
+   geometryStatus.classList.add("invalid");}
+ else {geometryStatus.textContent=rest==="corner"?`Corner contact on ${plane}; support vertex is on the plane.`:rest==="baseFace"?`Complete base face rests on ${plane}.`:`${rest==="base"?"Base edge":"Slant edge / generator"} rests on ${plane}.`;geometryStatus.classList.remove("invalid");}
+ if(c==="axisBoth")conditionHelp.textContent="For an axis inclined by α to HP and β to VP, sin²α + sin²β must not exceed 1. For pyramids/cones, apex direction affects which contact is possible. Edge contact is accepted only when the chosen edge is truly parallel to and supporting the selected plane; incompatible edge choices are disabled for the current angles.";
  else if(c==="axisHPedgeVP")conditionHelp.textContent="The selected base edge lies on HP and is inclined to VP by β. The axis inclination to HP is α; its final direction is determined by both constraints.";
  else conditionHelp.textContent="The selected base edge lies on VP and is inclined to HP by β. The axis inclination to VP is α; its final direction is determined by both constraints.";
  if(curved&&rest==="slant")conditionHelp.textContent+=" For a cylinder/cone generator, some axis-angle combinations cannot place the generator in the selected plane; the geometric check reports this.";
 }
 function refreshEdgeOptions(){
- const n=window.__baseEdges?.length||0;for(const opt of edgeSelect.options){const idx=Number(opt.value);opt.disabled=idx>=n}if(Number(edgeSelect.value)>=n)edgeSelect.value="0";
  const curved=["cylinder","cone"].includes(solidSelect.value),type=kindInfo[solidSelect.value]?.type;
- const slantOpt=[...restingCondition.options].find(o=>o.value==="slant");if(slantOpt)slantOpt.disabled=type==="prism";
- if(restingCondition.value==="slant"&&slantOpt?.disabled)restingCondition.value="base";
- for(const opt of conditionSelect.options){opt.disabled=curved&&opt.value!=="axisBoth";}
- if(curved&&conditionSelect.value!=="axisBoth")conditionSelect.value="axisBoth";
+ const condition=conditionSelect.value,rest=restingCondition.value;
+ const slantOpt=[...restingCondition.options].find(o=>o.value==="slant");
+ if(slantOpt){slantOpt.disabled=type==="prism";slantOpt.textContent=curved?"Generator":type==="pyramid"?"Slant edge":"Lateral edge";}
+ const faceOpt=[...restingCondition.options].find(o=>o.value==="baseFace");
+ const alpha=Number(angleA.value),beta=Number(angleB.value),plane=restingPlane.value;
+ if(faceOpt)faceOpt.disabled=condition!=="axisBoth"||apexDirection.value==="toward"||!((plane==="HP"&&Math.abs(alpha-90)<.51&&Math.abs(beta)<.51)||(plane==="VP"&&Math.abs(alpha)<.51&&Math.abs(beta-90)<.51));
+ if(slantOpt?.disabled&&rest==="slant")restingCondition.value="base";
+ for(const opt of conditionSelect.options)opt.disabled=curved&&opt.value!=="axisBoth";
+ if(curved&&conditionSelect.value!=="axisBoth"){
+   conditionSelect.value="axisBoth";angleA.max="90";
+   const maxB=Math.floor(Math.acos(Math.max(-1,Math.min(1,Math.sin(Number(angleA.value)*Math.PI/180))))*180/Math.PI);
+   angleB.max=String(maxB);if(Number(angleB.value)>maxB)angleB.value=String(maxB);
+ }
  const expected=conditionSelect.value==="axisHPedgeVP"?"HP":conditionSelect.value==="axisVPedgeHP"?"VP":null;
  restingPlane.disabled=!!expected;if(expected)restingPlane.value=expected;
  restingCondition.disabled=!!expected;if(expected)restingCondition.value="base";
- edgeSelectField.hidden=conditionSelect.value==="axisBoth"&&restingCondition.value==="corner";
+ if(faceOpt){const currentPlane=restingPlane.value;faceOpt.disabled=conditionSelect.value!=="axisBoth"||apexDirection.value==="toward"||!((currentPlane==="HP"&&Math.abs(alpha-90)<.51&&Math.abs(beta)<.51)||(currentPlane==="VP"&&Math.abs(alpha)<.51&&Math.abs(beta-90)<.51));}
+ const selectedIndex=Number(edgeSelect.value)||0;
+ let edgeList=[],prefix="Base edge";
+ if(conditionSelect.value!=="axisBoth"||restingCondition.value==="base"){edgeList=window.__baseEdges||[];prefix="Base edge";}
+ else if(restingCondition.value==="slant"){edgeList=window.__slantEdges||[];prefix=curved?"Generator":"Slant edge";}
+ edgeSelect.innerHTML="";
+ edgeList.forEach((edge,i)=>{const option=document.createElement("option");option.value=String(i);option.textContent=`${prefix} ${i+1}`;edgeSelect.appendChild(option);});
+ if(edgeList.length){
+   edgeSelect.value=String(Math.min(selectedIndex,edgeList.length-1));
+   const beta=Number(angleB.value)*Math.PI/180,axis=axisDirectionFromControls(),q=alignXTo(axis);
+   const contactPlane=conditionSelect.value==="axisHPedgeVP"?"HP":conditionSelect.value==="axisVPedgeHP"?"VP":restingPlane.value;
+   [...edgeSelect.options].forEach((option,i)=>{
+     const edge=edgeList[i],vector=rawVertices[edge[1]].clone().sub(rawVertices[edge[0]]);
+     const solved=conditionSelect.value==="axisBoth"?rollForEdge(q,vector,0,contactPlane,edge):rollForMixedEdge(q,vector,contactPlane,beta,edge);
+     option.disabled=!solved;
+   });
+ }
+ edgeSelectField.hidden=restingCondition.value==="corner"||restingCondition.value==="baseFace";
  const edgeLabel=edgeSelectField.querySelector("span");
- if(edgeLabel)edgeLabel.textContent=conditionSelect.value!=="axisBoth"?"Base edge used as hinge":restingCondition.value==="slant"?"Slant edge / generator": "Base edge reference";
- const options=[...edgeSelect.options];options.forEach((opt,i)=>{opt.textContent=i===0?"First edge":i===1?"Second edge":"Third edge"});
+ if(edgeLabel)edgeLabel.textContent=conditionSelect.value!=="axisBoth"?"Base edge used as hinge":restingCondition.value==="slant"?(curved?"Generator used for contact":"Slant edge used for contact"):"Base edge used for contact";
+ syncApexDirectionControl();
 }
 function drawSheet(){const w=sheet.width,h=sheet.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.strokeStyle="#e4eaf2";ctx.lineWidth=1;ctx.strokeRect(18,18,w-36,h-36);const xy=340;ctx.strokeStyle="#64748b";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(38,xy);ctx.lineTo(w-38,xy);ctx.stroke();ctx.fillStyle="#34445a";ctx.font="bold 17px system-ui";ctx.fillText("XY",w-66,xy-9);ctx.font="bold 16px system-ui";ctx.fillText("VP PROJECTION — FRONT VIEW (FV)",38,45);ctx.fillText("HP PROJECTION — TOP VIEW (TV)",38,xy+32);ctx.font="13px system-ui";ctx.fillStyle="#64748b";ctx.fillText("First-angle orthographic projection",38,h-28);
- const range=2.1;const scale=Math.min((w-150)/(range*2),(xy-82)/(range*1.7));const centerX=w/2;const zVals=currentVertices.map(p=>p.z),yVals=currentVertices.map(p=>p.y);const zMin=Math.min(...zVals),zMax=Math.max(...zVals),yMin=Math.min(...yVals),yMax=Math.max(...yVals);const zSpan=Math.max(.1,zMax-zMin),ySpan=Math.max(.1,yMax-yMin);const scaleFV=Math.min((w-140)/(Math.max(...currentVertices.map(p=>p.x))-Math.min(...currentVertices.map(p=>p.x)||0)+.1),(xy-80)/zSpan);const scaleTV=Math.min((w-140)/(Math.max(...currentVertices.map(p=>p.x))-Math.min(...currentVertices.map(p=>p.x))+0.1),(h-xy-90)/ySpan);
- const minX=Math.min(...currentVertices.map(p=>p.x)),maxX=Math.max(...currentVertices.map(p=>p.x));const sX=Math.min((w-140)/(maxX-minX+.1),scaleFV);const sZ=Math.min(sX,(xy-80)/zSpan);const sY=Math.min(sX,(h-xy-85)/ySpan);const fvYTop=62;const fvH=zSpan*sZ;const tvYTop=xy+46;const tvH=ySpan*sY;const mapFV=p=>({x:centerX+(p.x-(minX+maxX)/2)*sX,y:fvYTop+((zMax-p.z))*sZ});const mapTV=p=>({x:centerX+(p.x-(minX+maxX)/2)*sX,y:tvYTop+(yMax-p.y)*sY});
+ const centerX=w/2;
+ const minX=Math.min(...currentVertices.map(p=>p.x)),maxX=Math.max(...currentVertices.map(p=>p.x));
+ const maxZ=Math.max(...currentVertices.map(p=>p.z));
+ const maxDepth=Math.max(...currentVertices.map(p=>-p.y));
+ // Use one common scale for FV and TV and anchor both views to XY. Points on HP
+ // appear on XY in FV; points on VP appear on XY in TV (first-angle convention).
+ const scale=Math.min((w-140)/(maxX-minX+.1),(xy-75)/Math.max(.1,maxZ),(h-xy-80)/Math.max(.1,maxDepth));
+ const mapFV=p=>({x:centerX+(p.x-(minX+maxX)/2)*scale,y:xy-p.z*scale});
+ const mapTV=p=>({x:centerX+(p.x-(minX+maxX)/2)*scale,y:xy+(-p.y)*scale});
  // Projectors connect corresponding vertices through XY, reinforcing first-angle alignment.
  ctx.save();ctx.strokeStyle="#aab7c8";ctx.lineWidth=.8;ctx.setLineDash([3,5]);for(const p of currentVertices){const f=mapFV(p),t=mapTV(p);ctx.beginPath();ctx.moveTo(f.x,Math.min(xy-3,f.y+4));ctx.lineTo(t.x,Math.max(xy+3,t.y-4));ctx.stroke()}ctx.restore();
- function drawEdges(map){ctx.strokeStyle="#214f83";ctx.lineWidth=2.2;ctx.lineJoin="round";for(const [i,j] of edges){const p=map(currentVertices[i]),q=map(currentVertices[j]);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}}
- drawEdges(mapFV);drawEdges(mapTV);
+ const visibility=projectionVisibility();
+ function drawEdges(map,view){
+   for(let k=0;k<edges.length;k++){
+     const [i,j]=edges[k],p=map(currentVertices[i]),q=map(currentVertices[j]);
+     ctx.strokeStyle=view==="FV"?"#b9650a":"#167252";ctx.lineWidth=visibility[view][k]?2.2:1.5;ctx.lineJoin="round";ctx.setLineDash(visibility[view][k]?[]:[5,4]);
+     ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+   }
+   ctx.setLineDash([]);
+ }
+ drawEdges(mapFV,"FV");drawEdges(mapTV,"TV");
  // Highlight the selected contact feature in both orthographic projections.
  const contactPair=window.__contactPair,contactVertex=window.__contactVertex;
  if(contactPair){ctx.save();ctx.strokeStyle="#d97706";ctx.lineWidth=4;for(const map of [mapFV,mapTV]){const p=map(currentVertices[contactPair[0]]),q=map(currentVertices[contactPair[1]]);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}ctx.restore();}
  if(Number.isInteger(contactVertex)){ctx.save();ctx.fillStyle="#d97706";ctx.strokeStyle="#fff";ctx.lineWidth=2;for(const map of [mapFV,mapTV]){const q=map(currentVertices[contactVertex]);ctx.beginPath();ctx.arc(q.x,q.y,5,0,Math.PI*2);ctx.fill();ctx.stroke()}ctx.restore();}
- ctx.fillStyle="#214f83";for(const p of currentVertices){for(const m of [mapFV,mapTV]){const q=m(p);ctx.beginPath();ctx.arc(q.x,q.y,2.5,0,Math.PI*2);ctx.fill()}}ctx.strokeStyle="#d5dde8";ctx.lineWidth=1;ctx.strokeRect(30,55,w-60,xy-70);ctx.strokeRect(30,xy+42,w-60,h-xy-85);
+ ctx.fillStyle="#214f83";for(const p of currentVertices){for(const m of [mapFV,mapTV]){const q=m(p);ctx.beginPath();ctx.arc(q.x,q.y,2.5,0,Math.PI*2);ctx.fill()}}ctx.strokeStyle="#d5dde8";ctx.lineWidth=1;ctx.strokeRect(30,55,w-60,xy-55);ctx.strokeRect(30,xy,w-60,h-xy-55);
 }
 function resize(){const r=sceneWrap.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width)/Math.max(1,r.height);camera.updateProjectionMatrix();drawSheet()}new ResizeObserver(resize).observe(sceneWrap);window.addEventListener("resize",resize);
 solidSelect.addEventListener("change",()=>{setSolid(solidSelect.value);});conditionSelect.addEventListener("change",()=>{if(conditionSelect.value==="axisBoth"){angleA.max="90";angleB.max=String(Math.floor(Math.acos(Math.sin(Number(angleA.value)*Math.PI/180))*180/Math.PI));if(Number(angleB.value)>Number(angleB.max))angleB.value=angleB.max;}else{angleA.max="90";angleB.max="90";}refreshEdgeOptions();updateModel()});
-edgeSelect.addEventListener("change",updateModel);restingCondition.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});restingPlane.addEventListener("change",updateModel);
-angleA.addEventListener("input",()=>{if(conditionSelect.value==="axisBoth"){const maxB=Math.acos(Math.sin(Number(angleA.value)*Math.PI/180))*180/Math.PI;angleB.max=String(Math.floor(maxB));if(Number(angleB.value)>Number(angleB.max))angleB.value=angleB.max;}updateModel()});
-angleB.addEventListener("input",()=>{if(conditionSelect.value==="axisBoth"){const maxA=Math.acos(Math.sin(Number(angleB.value)*Math.PI/180))*180/Math.PI;angleA.max=String(Math.floor(maxA));if(Number(angleA.value)>Number(angleA.max))angleA.value=angleA.max;}updateModel()});
-$("resetBtn").addEventListener("click",()=>{solidSelect.value="triangular";conditionSelect.value="axisBoth";angleA.value="30";angleB.value="30";angleA.max="90";angleB.max=String(Math.floor(Math.acos(Math.sin(Math.PI/6))*180/Math.PI));edgeSelect.value="0";restingCondition.value="base";restingPlane.value="HP";theta=-.93;phi=.86;radius=12;updateCamera();setSolid(solidSelect.value);refreshEdgeOptions();updateModel()});
+edgeSelect.addEventListener("change",updateModel);restingCondition.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});restingPlane.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});apexDirection.addEventListener("change",()=>{refreshEdgeOptions();updateModel()});
+angleA.addEventListener("input",()=>{if(conditionSelect.value==="axisBoth"){const maxB=Math.acos(Math.sin(Number(angleA.value)*Math.PI/180))*180/Math.PI;angleB.max=String(Math.floor(maxB));if(Number(angleB.value)>Number(angleB.max))angleB.value=angleB.max;}refreshEdgeOptions();updateModel()});
+angleB.addEventListener("input",()=>{if(conditionSelect.value==="axisBoth"){const maxA=Math.acos(Math.sin(Number(angleB.value)*Math.PI/180))*180/Math.PI;angleA.max=String(Math.floor(maxA));if(Number(angleA.value)>Number(angleA.max))angleA.value=angleA.max;}refreshEdgeOptions();updateModel()});
+$("resetBtn").addEventListener("click",()=>{solidSelect.value="triangular";conditionSelect.value="axisBoth";angleA.value="30";angleB.value="30";angleA.max="90";angleB.max=String(Math.floor(Math.acos(Math.sin(Math.PI/6))*180/Math.PI));edgeSelect.value="0";restingCondition.value="base";restingPlane.value="HP";apexDirection.value="away";theta=-.93;phi=.86;radius=12;updateCamera();setSolid(solidSelect.value);refreshEdgeOptions();updateModel()});
 setSolid(solidSelect.value);resize();
 function animate(){requestAnimationFrame(animate);renderer.render(scene,camera)}animate();

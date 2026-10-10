@@ -113,3 +113,6 @@
   .mobile-module-menu > summary { gap: 5px; padding: 7px 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .mobile-menu-chevron { transition: none; } }
+.dot-projector { background: #8795a8; }
+.dot-hidden { background: transparent; border-top: 2px dashed #526078; border-radius: 0; height: 0; width: 11px; }
+[hidden] { display: none !important; }

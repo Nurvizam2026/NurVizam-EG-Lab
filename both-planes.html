@@ -87,7 +87,8 @@
         </label>
         <label class="field"><span>Resting / reference feature</span>
           <select id="restingCondition">
-            <option value="base">Base / base-edge hinge</option>
+            <option value="base">Base edge</option>
+            <option value="baseFace">Complete base face</option>
             <option value="corner">Corner / vertex</option>
             <option value="slant">Slant edge / generator</option>
           </select>
@@ -95,17 +96,20 @@
         <label class="field"><span>Reference plane for contact</span>
           <select id="restingPlane"><option value="HP">HP — Horizontal Plane</option><option value="VP">VP — Vertical Plane</option></select>
         </label>
+        <label class="field" id="apexDirectionField" hidden><span>Apex direction relative to HP</span>
+          <select id="apexDirection"><option value="away">Apex away from contact plane</option><option value="toward">Apex towards contact plane</option></select>
+        </label>
         <div class="field status-field"><span>Geometric check</span><p id="geometryStatus" role="status">Valid angle combination.</p></div>
       </div>
       <p class="help" id="conditionHelp">For an axis inclined to both planes, the two angles are constrained by the direction cosines of the axis.</p>
     </section>
 
     <section class="view-grid" aria-label="3D model and orthographic projections">
-      <article class="panel view-panel"><div class="view-heading"><div><h2>3D model</h2><p>Drag to orbit · Scroll to zoom</p></div><span class="view-tag">3D</span></div><div id="sceneWrap" class="scene-wrap"><div class="loading">Loading 3D model…</div></div><div class="legend"><span><i class="dot dot-solid"></i> Solid</span><span><i class="dot dot-hp"></i> HP</span><span><i class="dot dot-vp"></i> VP</span></div></article>
-      <article class="panel view-panel"><div class="view-heading"><div><h2>Orthographic drawing sheet</h2><p>Views are generated from the same transformed vertices.</p></div><span class="view-tag">2D</span></div><canvas id="drawingSheet" width="900" height="680" aria-label="First-angle front view above XY and top view below XY"></canvas><p class="projection-note"><strong>VP projection — Front View (FV):</strong> above XY. <strong>HP projection — Top View (TV):</strong> below XY. XY is the intersection of HP and VP. Dashed projectors align corresponding points in first-angle projection.</p></article>
+      <article class="panel view-panel"><div class="view-heading"><div><h2>3D model</h2><p>Drag to orbit · Scroll to zoom</p></div><span class="view-tag">3D</span></div><div id="sceneWrap" class="scene-wrap"><div class="loading">Loading 3D model…</div></div><div class="legend"><span><i class="dot dot-solid"></i> Solid</span><span><i class="dot dot-hp"></i> HP / TV</span><span><i class="dot dot-vp"></i> VP / FV</span><span><i class="dot dot-projector"></i> Projectors</span><span><i class="dot dot-hidden"></i> Hidden edges (dashed)</span></div></article>
+      <article class="panel view-panel"><div class="view-heading"><div><h2>Orthographic drawing sheet</h2><p>Views are generated from the same transformed vertices.</p></div><span class="view-tag">2D</span></div><canvas id="drawingSheet" width="900" height="680" aria-label="First-angle front view above XY and top view below XY"></canvas><p class="projection-note"><strong>VP projection — Front View (FV):</strong> on VP. <strong>HP projection — Top View (TV):</strong> on HP. The separate sheet places FV above XY and TV below XY in first-angle layout. In the 3D view, orange lines are FV, green lines are TV, and grey dashed lines are projectors. Hidden edges are dashed using a face-based visibility test; curved solids are polygonal approximations.</p></article>
     </section>
 
-    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>For the axis-both-planes condition, select a base-edge hinge, a supporting corner/vertex, or a slant edge/generator, and choose HP or VP as the contact plane. In the mixed conditions, the base edge is the required hinge and the reference plane is fixed by the construction.</li><li>The drawing sheet shows the VP projection (front view) above XY and the HP projection (top view) below XY, generated from the same transformed 3D vertices.</li></ol><p class="small-note">This is an educational visualizer. Check construction steps, contact conditions and visible/hidden-edge conventions against the prescribed engineering-drawing method for the specific problem.</p></section>
+    <section class="panel method"><h2>How to interpret this experiment</h2><ol><li>Select a solid and a geometric inclination condition.</li><li>Set the angle or angles. For an axis inclined to both HP and VP, the page limits the angle pair to geometrically possible combinations.</li><li>Observe how the same transformed vertices determine the 3D orientation, front view and top view.</li><li>For the axis-both-planes condition, choose a base edge, a complete base face (only at its geometrically compatible angles), a corner/vertex, or a slant edge/generator. An edge is reported as resting only when it is actually parallel to and supporting the selected plane. In the mixed conditions, the base edge is the required hinge and the reference plane is fixed by the construction.</li><li>The drawing sheet shows the VP projection (front view) above XY and the HP projection (top view) below XY, generated from the same transformed 3D vertices.</li></ol><p class="small-note">This is an educational visualizer. Cylinders and cones use faceted polygonal geometry; edge visibility is estimated from the polygon faces. Check construction steps and contact conditions against the prescribed engineering-drawing method for the specific problem.</p></section>
     <footer class="footer"><strong>Nurvizam Engineering Graphics Lab</strong><span>Module 02 · Solids inclined to both HP and VP</span><a href="./index.html">Open Module 01: Single-plane experiment</a><span>Developed by Dr. Mohammed Shafeeque KK · Ph.D., IIT Palakkad</span></footer>
   </main>
   <script type="module" src="./both-planes.js"></script>
