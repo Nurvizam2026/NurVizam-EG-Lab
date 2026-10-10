@@ -19,7 +19,7 @@ const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
 // This scene uses engineering-graphics coordinates: X horizontal, Y depth, Z vertical.
 // Three.js defaults to Y-up, so explicitly make Z the vertical axis.
 camera.up.set(0, 0, 1);
-camera.position.set(0, -12.5, 7.2);
+camera.position.set(8.5, -12.5, 8.0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -33,7 +33,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.up.set(0, 0, 1);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.target.set(0, -1.1, 1.65);
+controls.target.set(0, -1.2, 1.35);
 controls.minDistance = 5;
 controls.maxDistance = 18;
 controls.maxPolarAngle = Math.PI * 0.49;
@@ -45,6 +45,9 @@ keyLight.castShadow = true;
 scene.add(keyLight);
 
 const grid = new THREE.GridHelper(10, 20, 0xc1ccdc, 0xe0e6ef);
+// GridHelper is XZ by default. Rotate it into the XY plane so it lies on HP
+// in this engineering scene where Z is the vertical axis.
+grid.rotation.x = Math.PI / 2;
 grid.position.z = 0.005;
 scene.add(grid);
 
@@ -439,8 +442,8 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   angleModeLabel.textContent = "Inclination to HP";
   solidSelect.value = "triangular";
   guideSelect.value = "on";
-  camera.position.set(0, -12.5, 7.2);
-  controls.target.set(0, -1.1, 1.65);
+  camera.position.set(8.5, -12.5, 8.0);
+  controls.target.set(0, -1.2, 1.35);
   controls.update();
   hintBox.hidden = true;
   quizFeedback.hidden = true;
