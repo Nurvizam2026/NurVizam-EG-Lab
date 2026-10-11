@@ -42,3 +42,14 @@ General condition dropdown update
 - General mode is the default on page load and after Reset.
 
 Verification for this package: Node.js syntax check passed; HTML control IDs are unique and required controls are present. A live browser/WebGL render and all geometric combinations have not been exhaustively tested. Contact validity still depends on the implemented solver paths; the General option does not make every arbitrary solid/feature/angle combination mathematically solvable.
+
+
+Dual inclination condition update
+---------------------------------
+- Added independent feature selectors for inclination condition 1 and condition 2.
+- Each inclination condition has its own HP/VP dropdown. Angle 1 and angle 2 correspond to the selected feature/plane pairs, not automatically to HP and VP.
+- In General mode, a numerical orientation solver minimizes the two feature-angle errors together with a contact-condition residual. Line features use line-to-plane angles; face/base-plane features use plane-to-plane angles.
+- The solver reports the best residuals if the requested conditions do not fit the selected resting condition. It does not silently change the requested angles.
+- Existing named textbook conditions remain available and continue through their prior solver paths. Use General mode for the two independent inclination conditions.
+
+Verification for this update: ES-module JavaScript syntax check passed; HTML IDs are unique and all JS-referenced HTML IDs are present. ZIP integrity checked after packaging. A live browser/WebGL session could not be completed here, so representative solids/contact combinations should be checked in a browser before teaching deployment. The numerical solver is an approximate constrained-orientation solver, not a proof of existence for every possible solid/feature combination.
