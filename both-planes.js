@@ -5,6 +5,7 @@ async function loadThree(){
   throw new Error("Three.js could not load. Check internet access to a Three.js CDN. "+(last?.message||""));
 }
 const $=id=>document.getElementById(id);
+const NON_CONTACT_PLANE_CLEARANCE = 0.55; // increased visual gap from the plane not used for contact
 const solidSelect=$("solidSelect"),conditionSelect=$("conditionSelect"),cornerSelect=$("cornerSelect"),cornerSelectField=$("cornerSelectField"),angleA=$("angleA"),angleB=$("angleB"),angleAValue=$("angleAValue"),angleBValue=$("angleBValue"),angleALabel=$("angleALabel"),angleBLabel=$("angleBLabel"),edgeSelect=$("edgeSelect"),edgeSelectField=$("edgeSelectField"),inclinedPartSelect=$("inclinedPartSelect"),inclinedFeatureSelect=$("inclinedFeatureSelect"),inclinedFeatureSelectField=$("inclinedFeatureSelectField"),inclinedPart2Select=$("inclinedPart2Select"),inclinedFeature2Select=$("inclinedFeature2Select"),inclinedFeature2SelectField=$("inclinedFeature2SelectField"),inclinationPlane1=$("inclinationPlane1"),inclinationPlane2=$("inclinationPlane2"),restingCondition=$("restingCondition"),restingPlane=$("restingPlane"),apexDirectionField=$("apexDirectionField"),apexDirection=$("apexDirection"),geometryStatus=$("geometryStatus"),conditionHelp=$("conditionHelp"),sceneWrap=$("sceneWrap"),sheet=$("drawingSheet"),ctx=sheet.getContext("2d");
 const scene=new THREE.Scene();scene.background=new THREE.Color("#f4f7fb");
 const camera=new THREE.PerspectiveCamera(38,1,.1,100);camera.up.set(0,0,1);camera.position.set(7.5,-10,7.5);
@@ -348,9 +349,9 @@ function transformed(){
  if(rest==="baseFace" && baseFaceValid){
    const ring=window.__baseRing||[];const coords=ring.map(i=>plane==="HP"?pts[i].z:pts[i].y);const level=coords.reduce((a,b)=>a+b,0)/Math.max(1,coords.length);
    if(plane==="HP"){
-     pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-level));const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z));
+     pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-level));const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-NON_CONTACT_PLANE_CLEARANCE,p.z));
    }else{
-     pts=pts.map(p=>new THREE.Vector3(p.x,p.y-level,p.z));const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+.12));
+     pts=pts.map(p=>new THREE.Vector3(p.x,p.y-level,p.z));const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+NON_CONTACT_PLANE_CLEARANCE));
    }
    window.__contactPair=null;window.__contactVertex=null;
  }else if(rest==="triangularFace"&&faceSolution&&selectedFace){
@@ -362,10 +363,10 @@ function transformed(){
    const mid=pts[pair[0]].clone().add(pts[pair[1]]).multiplyScalar(.5);
    if(targetPlane==="HP"){
      pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-mid.z));
-     const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z));
+     const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-NON_CONTACT_PLANE_CLEARANCE,p.z));
    }else{
      pts=pts.map(p=>new THREE.Vector3(p.x,p.y-mid.y,p.z));
-     const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+.12));
+     const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+NON_CONTACT_PLANE_CLEARANCE));
    }
  }else{
    // Corner contact: choose the support vertex automatically so the complete
@@ -375,11 +376,11 @@ function transformed(){
      idx=cornerSolution?cornerSolution.vertexId:0;
      window.__contactVertex=cornerSolution?idx:null;
    }
-   if(plane==="HP") {const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ));const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z));}
-   else {const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY,p.z));const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+.12));}
+   if(plane==="HP") {const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ));const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-NON_CONTACT_PLANE_CLEARANCE,p.z));}
+   else {const maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY,p.z));const minZ=Math.min(...pts.map(p=>p.z));pts=pts.map(p=>new THREE.Vector3(p.x,p.y,p.z-minZ+NON_CONTACT_PLANE_CLEARANCE));}
  }
  // Keep ordinary non-contact configurations in the first quadrant.
- if(rest!=="corner"&&rest!=="baseFace"&&!pair){const minZ=Math.min(...pts.map(p=>p.z)),maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-.12,p.z-minZ+.12));}
+ if(rest!=="corner"&&rest!=="baseFace"&&!pair){const minZ=Math.min(...pts.map(p=>p.z)),maxY=Math.max(...pts.map(p=>p.y));pts=pts.map(p=>new THREE.Vector3(p.x,p.y-maxY-NON_CONTACT_PLANE_CLEARANCE,p.z-minZ+NON_CONTACT_PLANE_CLEARANCE));}
  return pts;
 }
 function rollForEdge(qAlign,edgeVector,targetDeg,plane,featurePair,rollAxisWorld=null){

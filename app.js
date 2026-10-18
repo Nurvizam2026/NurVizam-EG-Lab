@@ -157,9 +157,9 @@ function makeLabel(text, color, position, scale = 0.9) {
   scene.add(sprite);
   return sprite;
 }
-makeLabel("HP · HORIZONTAL PLANE", "#a94f66", new THREE.Vector3(2.25, -3.9, 0.12), 0.8);
+makeLabel("HP · HORIZONTAL PLANE", "#a94f66", new THREE.Vector3(2.25, -4.55, 0.12), 0.8);
 makeLabel("VP · VERTICAL PLANE", "#245fa8", new THREE.Vector3(-2.2, 0.05, 4.9), 0.8);
-makeLabel("TV · TOP VIEW", "#a94f66", new THREE.Vector3(1.65, -3.15, 0.18), 0.62);
+makeLabel("TV · TOP VIEW", "#a94f66", new THREE.Vector3(2.75, -3.85, 0.18), 0.62);
 makeLabel("FV · FRONT VIEW", "#245fa8", new THREE.Vector3(1.65, -0.04, 3.95), 0.62);
 
 function makePlane(w, h, color, opacity) {
@@ -169,7 +169,7 @@ function makePlane(w, h, color, opacity) {
 }
 
 const axes = new THREE.AxesHelper(1.7);
-axes.position.set(-3.5, -2.6, 0.03);
+axes.position.set(-3.5, -3.2, 0.03);
 scene.add(axes);
 
 let solidGroup = new THREE.Group();
@@ -596,9 +596,9 @@ function getTransformedVertices() {
     const minZ = Math.min(...rotated.map(v => v.z));
     const maxY = Math.max(...rotated.map(v => v.y));
     if (inclinationMode.value === "hp") {
-      return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, Math.max(0, v.z - minZ)));
+      return rotated.map(v => new THREE.Vector3(v.x, v.y - 3.2, Math.max(0, v.z - minZ)));
     }
-    const verticalClearance = 0.8;
+    const verticalClearance = 1.2;
     return rotated.map(v => new THREE.Vector3(v.x, v.y - maxY, v.z - minZ + verticalClearance));
   }
 
@@ -606,10 +606,10 @@ function getTransformedVertices() {
   const anchorCoord = normalCoordinate(rotated[ids[0]]);
   const minZ = Math.min(...rotated.map(v => v.z));
   if (inclinationMode.value === "hp") {
-    return rotated.map(v => new THREE.Vector3(v.x, v.y - 2.6, v.z - anchorCoord));
+    return rotated.map(v => new THREE.Vector3(v.x, v.y - 3.2, v.z - anchorCoord));
   }
   const maxY = Math.max(...rotated.map(v => v.y));
-  return rotated.map(v => new THREE.Vector3(v.x, v.y - anchorCoord, v.z - minZ + 0.8));
+  return rotated.map(v => new THREE.Vector3(v.x, v.y - anchorCoord, v.z - minZ + 1.2));
 }
 
 function updateModel() {
